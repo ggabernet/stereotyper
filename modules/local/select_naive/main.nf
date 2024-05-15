@@ -2,7 +2,7 @@ process SELECT_NAIVES {
     tag "$meta.id"
     publishDir "$params.outdir/select_naives/$meta.id", mode: 'copy'
     container "immcantation/airrflow:3.2.0"
-    label "process_single"
+    label "process_single_long"
 
     input:
     tuple val(meta), path(repertoire)
