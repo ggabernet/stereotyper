@@ -11,6 +11,7 @@ process SIMULATE_CLONE {
     tuple val(meta), path("${meta.id}.fasta"), emit: fasta
     path "versions.yml"                      , emit: versions
     path "${meta.id}.log"                    , emit: log
+    path "${meta.id}*"
 
     script:
     """
