@@ -28,7 +28,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_ster
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow GGABERNET_STEREOTYPER {
+workflow WF_STEREOTYPER {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -72,7 +72,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    GGABERNET_STEREOTYPER (
+    WF_STEREOTYPER (
         PIPELINE_INITIALISATION.out.samplesheet
     )
 
@@ -86,7 +86,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        GGABERNET_STEREOTYPER.out.multiqc_report
+        WF_STEREOTYPER.out.multiqc_report
     )
 }
 
