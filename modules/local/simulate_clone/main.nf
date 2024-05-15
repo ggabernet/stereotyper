@@ -10,6 +10,7 @@ process SIMULATE_CLONE {
     output:
     tuple val(meta), path("${meta.id}.fasta"), emit: fasta
     path "versions.yml"                      , emit: versions
+    path "${meta.id}.log"                    , emit: log
 
     script:
     """
@@ -27,7 +28,7 @@ process SIMULATE_CLONE {
     --stop_dist 1 \\
     --debug 1 \\
     --multifurcating_tree \\
-    --n_tries 1000
+    --n_tries 1000 > ${meta.id}.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
