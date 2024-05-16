@@ -2,7 +2,7 @@ process SIMULATE_CLONE {
     tag "$meta.id"
     publishDir "$params.outdir/simulate_clone/$meta.id", mode: 'copy'
     container "ggabernet/bcrphylosimulation:0.4"
-    label "process_single"
+    label "process_single_long"
 
     input:
     tuple val(meta), path(naive_seq)

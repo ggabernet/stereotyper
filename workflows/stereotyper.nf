@@ -6,6 +6,8 @@
 
 include { SELECT_NAIVES          } from '../modules/local/select_naive'
 include { SIMULATE_CLONE         } from '../modules/local/simulate_clone'
+include { TRANSLATE_CLONE        } from '../modules/local/translate_clone'
+include { ADD_CLONE_REPERTOIRE   } from '../modules/local/add_clone_repertoire'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -38,6 +40,7 @@ workflow STEREOTYPER {
 
     SELECT_NAIVES.out.fasta
         .splitFasta(file: true, by: 1)
+        .map{it -> [[id : it[0].id, naive: it[1].baseName], it[1]]}
         .dump(tag: "splitfastas")
         .set{ch_indiv_fasta}
     //
@@ -46,6 +49,40 @@ workflow STEREOTYPER {
     SIMULATE_CLONE (
         ch_indiv_fasta
     )
+    ch_versions = ch_versions.mix(SIMULATE_CLONE.out.versions.first())
+
+    //
+    // MODULE: Translate clone sequences
+    //
+    TRANSLATE_CLONE (
+        SIMULATE_CLONE.out.fasta
+    )
+
+    // Mix repertoire channel with clone channel
+    ch_clone_by_id = TRANSLATE_CLONE.out.airr.map{it -> [it[0].id, it[0], it[1]]}
+    ch_repertoire_clone = ch_samplesheet.map{it -> [it[0].id, it[0], it[1]]}
+                                        .combine(ch_clone_by_id, by: 0)
+                                        .dump(tag: "repertore_clone")
+                                        .map{it -> [it[3], it[2], it[4]]} // keep only one meta, the repertoire, and the simulated clone
+
+    // Set which intervals of Hamming distances should be tested
+    ch_distance_quantiles = Channel.of('q1', 'q2', 'q3', 'q4', 'closest')
+
+    // Combine channels to spike repertoires with different percentiles
+    ch_repertoire_ham_percentile = ch_distance_quantiles.combine(ch_repertoire_clone)
+                                                            .dump(tag: "rep_ham_percentile")
+
+    //
+    // MODULE: translate clone and add to repertoire
+    //
+    ADD_CLONE_REPERTOIRE(
+        ch_repertoire_ham_percentile
+    )
+
+    //
+    // MODULE: translate and add the simulated clone to the repertoire
+    //
+
 
     //
     // Collate and save software versions
