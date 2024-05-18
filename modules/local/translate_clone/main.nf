@@ -10,7 +10,7 @@ process TRANSLATE_CLONE {
     tuple val(meta), path(clone)
 
     output:
-    tuple val(meta), path("${clone.baseName}_translated.tsv") , emit: airr
+    tuple val(meta), path("${meta.id}_${meta.naive}_translated.tsv") , emit: airr
 
     script:
     """

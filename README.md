@@ -10,6 +10,9 @@
 
 ## Introduction
 
+> [!WARNING]
+> This repository is work in progress. Do not use.
+
 **ggabernet/stereotyper** is a bioinformatics pipeline that ...
 
 <!-- TODO nf-core:

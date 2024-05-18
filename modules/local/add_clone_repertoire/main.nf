@@ -5,18 +5,17 @@ process ADD_CLONE_REPERTOIRE {
     label "process_single"
 
     input:
-    tuple val(quant), val(meta), path(repertoire), path(clone)
+    tuple val(meta), path(repertoire), path(clone)
 
     output:
-    tuple val(meta), path("${meta.id}_repertoire_with_${meta.naive}_clone.tsv")
+    tuple val(meta), path("${meta.id}_repertoire_with_${meta.naive}_clone_sampled_*")
 
     script:
     """
     addclone_to_rep.R --repertoire ${repertoire} \\
     --clone ${clone} \\
-    --quant ${quant} \\
     --abund $params.clonal_abundance \\
     --target_sequence $params.target_seq_aa \\
-    --outname ${meta.id}_repertoire_with_${meta.naive}_clone_sampled_${quant}.tsv
+    --outname ${meta.id}_repertoire_with_${meta.naive}_clone_sampled_
     """
 }

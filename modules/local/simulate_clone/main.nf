@@ -8,7 +8,7 @@ process SIMULATE_CLONE {
     tuple val(meta), path(naive_seq)
 
     output:
-    tuple val(meta), path("${meta.id}.fasta"), emit: fasta
+    tuple val(meta), path("${meta.id}_${naive_seq.baseName}.fasta"), emit: fasta
     path "versions.yml"                      , emit: versions
     path "${meta.id}.log"                    , emit: log
     path "${meta.id}*"
@@ -18,7 +18,7 @@ process SIMULATE_CLONE {
     TMPDIR=/tmp xvfb-run python /bcr-phylo-benchmark/bin/simulator.py \\
     --mutability /bcr-phylo-benchmark/motifs/Mutability_S5F.csv \\
     --substitution /bcr-phylo-benchmark/motifs/Substitution_S5F.csv \\
-    --outbase "${meta.id}" \\
+    --outbase "${meta.id}_${naive_seq.baseName}" \\
     --lambda0 0.365 \\
     --n_to_sample 500 \\
     --naive_seq_file $naive_seq \\
@@ -29,7 +29,7 @@ process SIMULATE_CLONE {
     --stop_dist 1 \\
     --debug 1 \\
     --multifurcating_tree \\
-    --n_tries 1000 > ${meta.id}.log
+    --n_tries 1000 > ${meta.id}_${naive_seq.baseName}.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

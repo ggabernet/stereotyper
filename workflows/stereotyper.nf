@@ -64,19 +64,11 @@ workflow STEREOTYPER {
                                         .combine(ch_clone_by_id, by: 0)
                                         .dump(tag: "repertore_clone")
                                         .map{it -> [it[3], it[2], it[4]]} // keep only one meta, the repertoire, and the simulated clone
-
-    // Set which intervals of Hamming distances should be tested
-    ch_distance_quantiles = Channel.of('q1', 'q2', 'q3', 'q4', 'closest')
-
-    // Combine channels to spike repertoires with different percentiles
-    ch_repertoire_ham_percentile = ch_distance_quantiles.combine(ch_repertoire_clone)
-                                                            .dump(tag: "rep_ham_percentile")
-
     //
     // MODULE: translate clone and add to repertoire
     //
     ADD_CLONE_REPERTOIRE(
-        ch_repertoire_ham_percentile
+        ch_repertoire_clone
     )
 
     //
