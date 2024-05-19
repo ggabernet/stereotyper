@@ -10,7 +10,7 @@ process SIMULATE_CLONE {
     output:
     tuple val(meta), path("${meta.id}_${naive_seq.baseName}.fasta"), emit: fasta
     path "versions.yml"                      , emit: versions
-    path "${meta.id}.log"                    , emit: log
+    path " ${meta.id}_${naive_seq.baseName}.log"                    , emit: log
     path "${meta.id}*"
 
     script:
