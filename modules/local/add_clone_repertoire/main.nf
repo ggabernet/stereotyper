@@ -1,6 +1,6 @@
 process ADD_CLONE_REPERTOIRE {
     tag "${meta.id}_${meta.naive}_${quant}"
-    publishDir "$params.outdir/repertoire_with_clones/${meta.id}/"
+    publishDir "$params.outdir/repertoire_with_clones/${meta.id}/", mode: "copy"
     container "immcantation/airrflow:3.2.0"
     label "process_single"
 

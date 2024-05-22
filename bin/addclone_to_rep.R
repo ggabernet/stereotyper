@@ -66,18 +66,18 @@ for (i in length(quantiles)) {
         sampled_clone <- clone %>% filter(sampling == 1) %>% sample_n(n_sample)
         print(paste("Number of sequences sampled for quantile ",i,":", nrow(sampled_clone)))
         repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
-        write.table(repertoire_with_clone, file = paste0(opt$outname,"_quant",i,".tsv") sep = "\t", quote = FALSE, row.names = FALSE)
+        write.table(repertoire_with_clone, file = paste0(opt$outname,"_quant",i,".tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
 # Sample closest
 sampled_clone <- clone %>% slice_min(dist_to_target, n = n_sample)
 print(paste("Number of sequences sampled for closest:", nrow(sampled_clone)))
 repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
-write.table(repertoire_with_clone, file = paste0(opt$outname,"_closest.tsv") sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(repertoire_with_clone, file = paste0(opt$outname,"_closest.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
 # Sample random
 sampled_clone <- clone %>% sample_n(n_sample)
 print(paste("Number of sequences sampled for random:", nrow(sampled_clone)))
 repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
-write.table(repertoire_with_clone, file = paste0(opt$outname,"_random.tsv") sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(repertoire_with_clone, file = paste0(opt$outname,"_random.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
