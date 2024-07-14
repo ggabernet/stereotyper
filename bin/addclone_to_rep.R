@@ -61,9 +61,10 @@ print(quantiles)
 
 n_sample <- min(n_sample, nrow(clone))
 
-for (i in length(quantiles)) {
+for (i in c(1:length(quantiles))) {
         clone$sampling <- ifelse(clone$dist_to_target <= quantiles[i], 1, 0)
-        sampled_clone <- clone %>% filter(sampling == 1) %>% sample_n(n_sample)
+        clone_to_sample <- clone %>% filter(sampling == 1)
+        sampled_clone <- clone_to_sample %>% sample_n(min(n_sample, nrow(clone_to_sample)))
         print(paste("Number of sequences sampled for quantile ",i,":", nrow(sampled_clone)))
         repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
         write.table(repertoire_with_clone, file = paste0(opt$outname,"_quant",i,".tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
@@ -80,4 +81,14 @@ sampled_clone <- clone %>% sample_n(n_sample)
 print(paste("Number of sequences sampled for random:", nrow(sampled_clone)))
 repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
 write.table(repertoire_with_clone, file = paste0(opt$outname,"_random.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Sample from each distance
+num_dists <- n_distinct(as.factor(clone$dist_to_target))
+n_sample_dist <- round(n_sample/num_dists, 0)
+dist_groups <- split(clone, f=clone$dist_to_target)
+dist_groups_samples <- lapply(dist_groups, function(x) x %>% sample_n(min(n_sample_dist, nrow(x))))
+sampled_clone <- do.call(rbind, dist_groups_samples)
+print(paste("Number of sequences sampled for distance diverse:", nrow(sampled_clone)))
+repertoire_with_clone <- dplyr::bind_rows(repertoire, sampled_clone)
+write.table(repertoire_with_clone, file = paste0(opt$outname,"_dist_diverse.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 
