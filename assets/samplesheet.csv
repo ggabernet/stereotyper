@@ -1,3 +1,2 @@
-sample_id,repertoire
-rep1,https://zenodo.org/records/10989592/files/sim_repertoire_orig_repA.tsv
-rep2,https://zenodo.org/records/10989592/files/sim_repertoire_orig_repB.tsv
+sample_id,repertoire,repertoire_embedded
+rep1,/mnt/volume/Projects/convergence/test_malID_HDT/M64-004_syn61987835_IGH_translated.tsv,/mnt/volume/Projects/convergence/test_malID_HDT/M64-004_syn61987835_IGH_translated_H_antiberty.tsv

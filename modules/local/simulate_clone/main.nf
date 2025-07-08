@@ -27,6 +27,7 @@ process SIMULATE_CLONE {
     --skip_update 100 \\
     --obs_times 100 1000 2000 3000 4000 5000 6000 \\
     --stop_dist 1 \\
+    --metric_for_target_distance aa-sim-blosum \\
     --debug 1 \\
     --multifurcating_tree \\
     --n_tries 1000 > ${meta.id}_${naive_seq.baseName}.log
