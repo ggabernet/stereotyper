@@ -18,7 +18,6 @@ import anndata as ad
 import os
 from pathlib import Path
 import sklearn
-import amulety.bcr_embeddings
 import umap
 import numpy as np
 import logging
@@ -35,6 +34,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
 parser = argparse.ArgumentParser(description="Select simulated sequences based on centroids and target embedding.")
 parser.add_argument("--dir", type=str, default=".", help="results directory")
 parser.add_argument("--repertoire_embedding", type=str, help="Path to repertoire embedded file")
@@ -46,15 +46,16 @@ parser.add_argument("--embedding_model", type=str, default="antiberty", help="Em
 parser.add_argument("--abundance", type=float, default=0.01, help="Abundance fraction")
 parser.add_argument("--repertoire_sample", type=int, default=100000, help="Number of repertoire samples")
 parser.add_argument("--random_seed", type=int, default=42, help="Random seed")
-parser.add_argument("--germline_vcall", type=str, default="IGHV3-53", help="Germline V call")
-parser.add_argument("--germline_jcall", type=str, default="IGHJ4", help="Germline J call")
 args = parser.parse_args()
 
 
 dir = args.dir
-figures_dir = dir + "figures/"
+figures_dir = dir
 input_path = Path(dir)
 sc.settings.figdir = figures_dir
+
+if not os.path.exists(figures_dir):
+    os.makedirs(figures_dir)
 
 repertoire_embedding = args.repertoire_embedding
 simulated_embedding = args.simulated_embedding
@@ -65,8 +66,6 @@ embedding_model = args.embedding_model
 abundance = args.abundance
 repertoire_sample = args.repertoire_sample
 random_seed = args.random_seed
-germline_vcall = args.germline_vcall
-germline_jcall = args.germline_jcall
 
 
 # Input data
@@ -84,21 +83,26 @@ sim_embed = pd.read_csv(simulated_embedding, sep="\t", header=0)
 rep = pd.read_csv(repertoire, sep="\t", header=0)
 sim = pd.read_csv(simulated, sep="\t", header=0)
 
-# Embed target
-def compute_embedding(sequences, model='antiberta2'):
-    if model == 'antiberta2':
-        embedding = amulety.bcr_embeddings.antiberta2(sequences=sequences)
-    elif model == 'esm2':
-        embedding = amulety.bcr_embeddings.esm2(sequences=sequences)
-    elif model == 'antiberty':
-        embedding = amulety.bcr_embeddings.antiberty(sequences=sequences)
-    elif model == 'balm_paired':
-        embedding = amulety.bcr_embeddings.balm_paired(sequences=sequences)
-    else:
-        raise ValueError(f"Unsupported model: {model}")
-    return embedding
+# # Embed target
+# def compute_embedding(sequences, model='antiberta2'):
+#     if model == 'antiberta2':
+#         embedding = amulety.bcr_embeddings.antiberta2(sequences=sequences)
+#     elif model == 'esm2':
+#         embedding = amulety.bcr_embeddings.esm2(sequences=sequences)
+#     elif model == 'antiberty':
+#         embedding = amulety.bcr_embeddings.antiberty(sequences=sequences)
+#     elif model == 'balm_paired':
+#         embedding = amulety.bcr_embeddings.balm_paired(sequences=sequences)
+#     else:
+#         raise ValueError(f"Unsupported model: {model}")
+#     return embedding
 
-target_embed = compute_embedding(pd.Series([target_aa]), model=embedding_model)
+# target_embed = compute_embedding(pd.Series([target_aa]), model=embedding_model)
+
+# Select target embedding from simulated sequences embedding
+# Get target from simulation (dist = 0)
+target_id = sim[sim["dist_to_target"] == 0]["sequence_id"].values[0]
+target_embed = sim_embed[sim_embed["sequence_id"] == target_id].drop(columns=["sequence_id"])
 
 logger.info("Repertoire embedded shape: %s", rep_embed.shape)
 logger.info("Simulation embedded shape: %s", sim_embed.shape)
@@ -129,6 +133,7 @@ sim_embed["sequence_id"] = subj_id + "|" + sim_embed["sequence_id"]
 sim["sequence_id"] = subj_id + "|" + sim["sequence_id"]
 sim_meta = sim.drop_duplicates(subset=["sequence_id"])
 sim_meta = sim_meta.drop_duplicates(subset=["sequence_vdj_aa"])
+
 # remove sequences with zero distance to target
 sim_meta = sim_meta[sim_meta["dist_to_target"] > 0]
 
@@ -140,8 +145,8 @@ sim_embed = sim_embed[sim_embed["sequence_id"].isin(sim_meta["sequence_id"])]
 # TODO if checking different germlines, we will need to annotate the V gene of the germline
 sim_meta["simulated"] = True
 sim_meta["subject_id"] = subj_id
-sim_meta["v_call"] = germline_vcall
-sim_meta["j_call"] = germline_jcall
+sim_meta["v_call"] = "unknown"
+sim_meta["j_call"] = "unknown"
 
 # Set sequence_id as index
 rep_embed.set_index("sequence_id", inplace=True)
@@ -450,10 +455,10 @@ logger.info("Saving results...")
 
 ### Save results
 repertoire_with_simulated_meta = pd.concat([rep_meta, picked_simulated_seqs_meta])
-repertoire_with_simulated_meta.reset_index().rename(columns={'index': 'sequence_id'})
-repertoire_with_simulated_meta.to_csv("repertoire_with_simulated_meta.tsv", sep="\t", index=False)
+repertoire_with_simulated_meta.reset_index(inplace=True, names="sequence_id")
+repertoire_with_simulated_meta.to_csv(dir+subj_id+"_repertoire_with_simulated_meta.tsv", sep="\t", index=False)
 
 repertoire_with_simulated_embed = pd.concat([rep_embed, picked_simulated_seqs])
-repertoire_with_simulated_embed.reset_index().rename(columns={'index': 'sequence_id'})
-repertoire_with_simulated_embed.to_csv("repertoire_with_simulated_embedding.tsv", sep="\t", index=False)
+repertoire_with_simulated_embed.reset_index(inplace=True, names="sequence_id")
+repertoire_with_simulated_embed.to_csv(dir+subj_id+"_repertoire_with_simulated_embedding.tsv", sep="\t", index=False)
 logger.info("Done!")

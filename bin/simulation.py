@@ -21,12 +21,12 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects import r
 import matplotlib.pyplot as plt
 import logomaker
-import amulety
-import torch
+#import amulety
+#import torch
 import warnings
 import argparse
 import os
-warnings.filterwarnings("ignore", module="amulety.amulety")
+#warnings.filterwarnings("ignore", module="amulety.amulety")
 
 # Read simulated repertoire
 
@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore", module="amulety.amulety")
 parser = argparse.ArgumentParser(description="Simulate convergence of antibody sequences.")
 parser.add_argument("--input_repertoire", type=str, help="Path to input repertoire TSV file")
 parser.add_argument("--target_aa", type=str, help="Path to target sequence TSV file")
-parser.add_argument("--embedding_model_input", type=str, default="None", help="Embedding model to use")
+#parser.add_argument("--embedding_model_input", type=str, default="None", help="Embedding model to use")
 parser.add_argument("--distance_function_input", type=str, default="hamming_distance", help="Distance function to use")
 parser.add_argument("--n_children_per_generation", type=int, default=100, help="Number of children per generation")
 parser.add_argument("--mutation_rate", type=float, default=0.001, help="Mutation rate per generation")
@@ -50,7 +50,8 @@ input_repertoire = args.input_repertoire
 sequence_nt_column = args.sequence_nt_column
 sequence_aa_column = args.sequence_aa_column
 target_aa = args.target_aa
-embedding_model_input = args.embedding_model_input
+#embedding_model_input = args.embedding_model_input
+embedding_model_input = None
 distance_function_input = args.distance_function_input
 n_children_per_generation = args.n_children_per_generation
 mutation_rate = args.mutation_rate
@@ -68,10 +69,9 @@ shazam = importr('shazam')
 alakazam = importr('alakazam')
 
 
-# %% [markdown]
 # ## Functions
 
-# %%
+
 class Sequence:
     def __init__(self, sequence_aa, sequence_id, sequence_nt, dist_to_target=None, embedding=None):
         self.sequence_aa = sequence_aa
@@ -108,18 +108,18 @@ def hamming_distance(sequences: pd.Series,
     else:
         return dist
 
-def compute_embedding(sequences, model='antiberta2'):
-    if model == 'antiberta2':
-        embedding = amulety.amulety.antiberta2(sequences=sequences)
-    elif model == 'esm2':
-        embedding = amulety.amulety.esm2(sequences=sequences)
-    elif model == 'antiberty':
-        embedding = amulety.amulety.antiberty(sequences=sequences)
-    elif model == 'balm_paired':
-        embedding = amulety.amulety.balm_paired(sequences=sequences)
-    else:
-        raise ValueError(f"Unsupported model: {model}")
-    return embedding
+# def compute_embedding(sequences, model='antiberta2'):
+#     if model == 'antiberta2':
+#         embedding = amulety.amulety.antiberta2(sequences=sequences)
+#     elif model == 'esm2':
+#         embedding = amulety.amulety.esm2(sequences=sequences)
+#     elif model == 'antiberty':
+#         embedding = amulety.amulety.antiberty(sequences=sequences)
+#     elif model == 'balm_paired':
+#         embedding = amulety.amulety.balm_paired(sequences=sequences)
+#     else:
+#         raise ValueError(f"Unsupported model: {model}")
+#     return embedding
 
 class Stereotyping:
     """
@@ -154,15 +154,15 @@ class Stereotyping:
         if not isinstance(sequences, pd.Series):
             raise TypeError("compatible_naives must be a pandas Series.")
 
-        if self.embedding_model is not None:
-            embeddings = compute_embedding(
-                sequences=sequences,
-                model=self.embedding_model
-            )
-            # Compute euclidean distances
-            distances = torch.cdist(embeddings, self.target.embedding)
-            min_index = int(distances.argmin())
-            return embeddings, distances.numpy().flatten(), min_index
+        # if self.embedding_model is not None:
+        #     embeddings = compute_embedding(
+        #         sequences=sequences,
+        #         model=self.embedding_model
+        #     )
+        #     # Compute euclidean distances
+        #     distances = torch.cdist(embeddings, self.target.embedding)
+        #     min_index = int(distances.argmin())
+        #     return embeddings, distances.numpy().flatten(), min_index
 
         else:
             distances = self.distance_function(
@@ -190,7 +190,8 @@ class Stereotyping:
             sequence_id="target_sequence",
             sequence_nt=None,  # Target sequence does not have a nucleotide representation
             dist_to_target=0,  # Distance to itself is zero
-            embedding=compute_embedding(pd.Series([target_aa]), model=embedding_model) if embedding_model else None
+            embedding=None
+            #embedding=compute_embedding(pd.Series([target_aa]), model=embedding_model) if embedding_model else None
         )
 
         # Select closest sequence from compatible_naives

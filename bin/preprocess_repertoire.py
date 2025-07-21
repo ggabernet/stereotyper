@@ -5,7 +5,6 @@ Preprocess repertoire file by subsampling and translating sequences.
 This script reads a repertoire TSV file, drops rows with incomplete CDR1 sequences,
 generates a new nucleotide sequence column without FWR1, translates the sequences to amino acids,
 and subsamples the data to a specified size. The output is saved to a new TSV file.
-# TODO: remove seqs with incomplete fwr4
 
 Usage:
 python preprocess_repertoire.py --input_repertoire <input_file.tsv> --subsample_size <size> --outname <output_file.tsv>
@@ -54,10 +53,13 @@ original_size = repertoire.shape[0]
 # drop rows where "cdr1" column starts with "."
 repertoire = repertoire[~repertoire["cdr1"].str.startswith(".")]
 
+# drop rows with incomplete fwr4 sequences
+repertoire = repertoire[~repertoire["fwr4"].str.endswith(".")]
+repertoire = repertoire[~repertoire["fwr4"].str.endswith("-")]
 
 rows_dropped = original_size - repertoire.shape[0]
-print("Dropped sequences with incompleted cdr1:", rows_dropped)
 
+print("Dropped sequences with incompleted cdr1 or fwr4:", rows_dropped)
 
 
 # generate new sequence_nt column by concatenating cdr1, fwr2, cdr2, fwr3, cdr3, fwr4

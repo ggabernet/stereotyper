@@ -4,15 +4,27 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SELECT_NAIVES          } from '../modules/local/select_naive'
-include { SIMULATE_CLONE         } from '../modules/local/simulate_clone'
-include { TRANSLATE_CLONE        } from '../modules/local/translate_clone'
-include { ADD_CLONE_REPERTOIRE   } from '../modules/local/add_clone_repertoire'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { PREPROCESS_REPERTOIRE   } from '../modules/local/preprocess_repertoire/main'
+include { SIMULATE_CONVERGENCE    } from '../modules/local/simulation/main'
+
+// nf-core subworkflows
 include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_stereotyper_pipeline'
+
+
+// nf-core modules
+include { AMULETY_ANTIBERTA2 } from '../modules/nf-core/amulety/antiberta2/main'
+include { AMULETY_ANTIBERTY } from '../modules/nf-core/amulety/antiberty/main'
+include { AMULETY_BALMPAIRED } from '../modules/nf-core/amulety/balmpaired/main'
+include { AMULETY_ESM2 } from '../modules/nf-core/amulety/esm2/main'
+include { AMULETY_ANTIBERTA2 as AMULETY_ANTIBERTA2_SIM } from '../modules/nf-core/amulety/antiberta2/main'
+include { AMULETY_ANTIBERTY as AMULETY_ANTIBERTY_SIM } from '../modules/nf-core/amulety/antiberty/main'
+include { AMULETY_BALMPAIRED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/balmpaired/main'
+include { AMULETY_ESM2 as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/esm2/main'
+include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,49 +43,110 @@ workflow STEREOTYPER {
     ch_multiqc_files = Channel.empty()
 
     //
-    // MODULE: Select naive sequences
+    // MODULE: Preprocess repertoire
     //
-    SELECT_NAIVES (
+    PREPROCESS_REPERTOIRE (
         ch_samplesheet
     )
-    ch_versions = ch_versions.mix(SELECT_NAIVES.out.versions.first())
+    ch_versions = ch_versions.mix(PREPROCESS_REPERTOIRE.out.versions.first())
 
-    SELECT_NAIVES.out.fasta
-        .splitFasta(file: true, by: 1)
-        .map{it -> [[id : it[0].id, naive: it[1].baseName], it[1]]}
-        .dump(tag: "splitfastas")
-        .set{ch_indiv_fasta}
-    //
-    // MODULE: Simulate clone
-    //
-    SIMULATE_CLONE (
-        ch_indiv_fasta
+    ch_repertoire_embeddings = Channel.empty()
+
+    // Get repertoire embeddings
+    if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
+        AMULETY_ANTIBERTY(
+            PREPROCESS_REPERTOIRE.out.repertoire,
+            params.embedding_chain
+        )
+        ch_repertoire_embeddings = ch_repertoire_embeddings
+                        .mix(AMULETY_ANTIBERTY.out.embedding
+                        .map{ it -> ["antiberty", it[0], it[1]] })
+    }
+
+    if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
+        AMULETY_ANTIBERTA2(
+            PREPROCESS_REPERTOIRE.out.repertoire,
+            params.embedding_chain
+        )
+        ch_repertoire_embeddings = ch_repertoire_embeddings
+                        .mix(AMULETY_ANTIBERTA2.out.embedding
+                        .map{ it -> ["antiberta2", it[0], it[1]] })
+    }
+
+    if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
+        AMULETY_ESM2(
+            PREPROCESS_REPERTOIRE.out.repertoire,
+            params.embedding_chain
+        )
+        ch_repertoire_embeddings = ch_repertoire_embeddings
+                        .mix(AMULETY_ESM2.out.embedding
+                        .map{ it -> ["esm2", it[0], it[1]] })
+    }
+
+    if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
+        AMULETY_BALMPAIRED(
+            PREPROCESS_REPERTOIRE.out.repertoire,
+            params.embedding_chain
+        )
+        ch_repertoire_embeddings = ch_repertoire_embeddings
+                        .mix(AMULETY_BALMPAIRED.out.embedding
+                        .map{ it -> ["balmpaired", it[0], it[1]] })
+    }
+
+    // Simulate convergence
+    SIMULATE_CONVERGENCE (
+        PREPROCESS_REPERTOIRE.out.repertoire
     )
-    ch_versions = ch_versions.mix(SIMULATE_CLONE.out.versions.first())
 
-    //
-    // MODULE: Translate clone sequences
-    //
-    TRANSLATE_CLONE (
-        SIMULATE_CLONE.out.fasta
-    )
+    ch_sim_embeddings = Channel.empty()
+    // Get simulated sequences embeddings
+    if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
+        AMULETY_ANTIBERTY_SIM(
+            SIMULATE_CONVERGENCE.out.sequences,
+            params.embedding_chain
+        )
+        ch_sim_embeddings = ch_sim_embeddings
+                        .mix(AMULETY_ANTIBERTY_SIM.out.embedding
+                        .map{ it -> ["antiberty", it[0], it[1]] })
+    }
 
-    // Mix repertoire channel with clone channel
-    ch_clone_by_id = TRANSLATE_CLONE.out.airr.map{it -> [it[0].id, it[0], it[1]]}
-    ch_repertoire_clone = ch_samplesheet.map{it -> [it[0].id, it[0], it[1]]}
-                                        .combine(ch_clone_by_id, by: 0)
-                                        .dump(tag: "repertore_clone")
-                                        .map{it -> [it[3], it[2], it[4]]} // keep only one meta, the repertoire, and the simulated clone
-    //
-    // MODULE: translate clone and add to repertoire
-    //
-    ADD_CLONE_REPERTOIRE(
-        ch_repertoire_clone
-    )
+    if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
+        AMULETY_ANTIBERTA2_SIM(
+            SIMULATE_CONVERGENCE.out.sequences,
+            params.embedding_chain
+        )
+        ch_sim_embeddings = ch_sim_embeddings
+                        .mix(AMULETY_ANTIBERTA2_SIM.out.embedding
+                        .map{ it -> ["antiberta2", it[0], it[1]] })
+    }
 
-    //
-    // MODULE: translate and add the simulated clone to the repertoire
-    //
+    if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
+        AMULETY_ESM2_SIM(
+            SIMULATE_CONVERGENCE.out.sequences,
+            params.embedding_chain
+        )
+        ch_sim_embeddings = ch_sim_embeddings
+                        .mix(AMULETY_ESM2_SIM.out.embedding
+                        .map{ it -> ["esm2", it[0], it[1]] })
+    }
+
+    if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
+        AMULETY_BALMPAIRED_SIM(
+            SIMULATE_CONVERGENCE.out.sequences,
+            params.embedding_chain
+        )
+        ch_sim_embeddings = ch_sim_embeddings
+                        .mix(AMULETY_BALMPAIRED_SIM.out.embedding
+                        .map{ it -> ["balmpaired", it[0], it[1]] })
+    }
+
+    ch_repertoire_embeddings.dump(tag: 'repertoire_embeddings') // Debugging
+    ch_sim_embeddings.dump(tag: 'simulated_embeddings') // Debugging
+    PREPROCESS_REPERTOIRE.out.repertoire.dump(tag: 'repertoire') // Debugging
+    SIMULATE_CONVERGENCE.out.sequences.dump(tag: 'simulated_sequences') // Debugging
+
+
+
 
 
     //
