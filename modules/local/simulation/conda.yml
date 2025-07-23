@@ -1,0 +1,21 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::logomaker=0.8
+- conda-forge::anndata=0.12.0
+- conda-forge::matplotlib=3.10.3
+- conda-forge::numpy=2.2.6
+- conda-forge::pandas=2.3.1
+- conda-forge::rpy2=3.5.11
+- conda-forge::scanpy=1.11.3
+- conda-forge::scikit-learn=1.7.1
+- conda-forge::seaborn=0.13.2
+- conda-forge::umap-learn=0.5.8
+- conda-forge::r-devtools
+- conda-forge::r-ggplot2
+- conda-forge::r-igraph
+- conda-forge::r-matrix
+- conda-forge::r-seqinr
+- bioconda::bioconductor-biostrings
+- bioconda::bioconductor-genomicalignments

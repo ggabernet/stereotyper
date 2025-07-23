@@ -1,0 +1,17 @@
+FROM mambaorg/micromamba:1.5.10-noble
+COPY --chown=$MAMBA_USER:$MAMBA_USER conda.yml /tmp/conda.yml
+RUN micromamba install -y -n base -f /tmp/conda.yml \
+    && micromamba install -y -n base conda-forge::procps-ng \
+    && micromamba env export --name base --explicit > environment.lock \
+    && echo ">> CONDA_LOCK_START" \
+    && cat environment.lock \
+    && echo "<< CONDA_LOCK_END" \
+    && micromamba clean -a -y
+USER root
+ENV PATH="$MAMBA_ROOT_PREFIX/bin:$PATH"
+
+# Install alakazam
+RUN Rscript -e "devtools::install_github('immcantation/alakazam@1.3.1'); library(alakazam)"
+
+# Install shazam
+RUN Rscript -e "devtools::install_github('immcantation/shazam@master'); library(shazam)"

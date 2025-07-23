@@ -1,12 +1,14 @@
 process SIMULATE_CONVERGENCE {
     tag "$meta.id"
     publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
+    container "docker.io/ggabernet/stereotyper:dev"
 
     input:
     tuple val(meta), path(repertoire)
 
     output:
-    tuple val(meta), path(simulation), emit: sequences
+    tuple val(meta), path("*_selected_sequences.tsv"), emit: sequences
+    tuple val(meta), path("*_generations_logo.png"), path("*_generations_plot.png"), emit: plots
     path "versions.yml", emit: versions
 
     script:

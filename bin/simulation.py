@@ -1,4 +1,6 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
 # This script simulates the convergence of antibody sequences towards a target sequence using a naive stereotyping approach.
 # It generates child sequences from a starting sequence and evaluates their distance to a target sequence.
 # Usage: python simulation.py --input_repertoire <input_file.tsv> --target_aa <target_sequence.tsv> --embedding_model_input <model_name> --distance_function_input <distance_function> --n_children_per_generation <number_of_children> --mutation_rate <mutation_rate> --output_prefix <output_prefix>
@@ -51,7 +53,7 @@ sequence_nt_column = args.sequence_nt_column
 sequence_aa_column = args.sequence_aa_column
 target_aa = args.target_aa
 #embedding_model_input = args.embedding_model_input
-embedding_model_input = None
+#embedding_model_input = None
 distance_function_input = args.distance_function_input
 n_children_per_generation = args.n_children_per_generation
 mutation_rate = args.mutation_rate
@@ -100,6 +102,9 @@ def hamming_distance(sequences: pd.Series,
     seqs_len = sequences.str.len().values
     target_len = target.str.len().values
     if not all(seqs_len == target_len):
+        print("Sequence lengths:", seqs_len)
+        print("Target length:", target_len)
+        print("Sequences:", sequences)
         raise ValueError("All sequences must be of equal length to the target for Hamming distance calculation.")
 
     dist = sequences.apply(lambda x: hdist(x, target.iloc[0])).values
@@ -316,9 +321,12 @@ class Stereotyping:
                 all_sequences.append({
                     'generation': gen,
                     'sequence_id': child.sequence_id,
-                    'sequence_aa': child.sequence_aa,
-                    'sequence_nt': child.sequence_nt,
-                    'dist_to_target': child.dist_to_target
+                    'sequence_vdj_aa': child.sequence_aa,
+                    'sequence': child.sequence_nt,
+                    'dist_to_target': child.dist_to_target,
+                    'v_call': 'IGHV',
+                    'j_call': 'IGHJ',
+                    'duplicate_count': 1
                 })
 
         df = pd.DataFrame(all_sequences)
@@ -340,7 +348,10 @@ class Stereotyping:
                 'sequence_id': seq.sequence_id,
                 'sequence_aa': seq.sequence_aa,
                 'sequence_nt': seq.sequence_nt,
-                'dist_to_target': seq.dist_to_target
+                'dist_to_target': seq.dist_to_target,
+                'v_call': 'IGHV',
+                'j_call': 'IGHJ',
+                'duplicate_count': 1
             })
 
         df = pd.DataFrame(selected_sequences)
@@ -404,7 +415,7 @@ class Stereotyping:
 
         # Plot the sequence logo
         plt.figure(figsize=(25, 2))
-        logo = logomaker.Logo(counts_mat, shade_below=.5, fade_below=.5, font_name='Arial')
+        logo = logomaker.Logo(counts_mat, shade_below=.5, fade_below=.5)
         logo.style_spines(visible=False)
         logo.style_spines(spines=['left', 'bottom'], visible=True)
         logo.ax.set_ylabel('Count')
@@ -416,18 +427,18 @@ class Stereotyping:
 hh_s5f = r["HH_S5F"]
 
 # Read embedding model param
-if embedding_model_input != "None":
-    if embedding_model_input not in ["antiberta2", "esm2", "antiberty", "balm_paired"]:
-        raise ValueError(f"Unsupported embedding model: {embedding_model_input}. Supported models are 'antiberta2', 'esm2', 'antiberty', 'balm_paired'.")
-    embedding_model = embedding_model_input
-else:
-    embedding_model = None
+# if embedding_model_input != "None":
+#     if embedding_model_input not in ["antiberta2", "esm2", "antiberty", "balm_paired"]:
+#         raise ValueError(f"Unsupported embedding model: {embedding_model_input}. Supported models are 'antiberta2', 'esm2', 'antiberty', 'balm_paired'.")
+#     embedding_model = embedding_model_input
+# else:
+#     embedding_model = None
 
 # Read distance function
 if distance_function_input == "hamming_distance":
     distance_function = hamming_distance
-elif embedding_model_input == "None":
-    raise ValueError(f"Unsupported distance function: {distance_function_input}. Only 'hamming_distance' is supported.")
+#elif embedding_model_input == "None":
+#    raise ValueError(f"Unsupported distance function: {distance_function_input}. Only 'hamming_distance' is supported.")
 
 # Read repertoire
 repertoire = pd.read_csv(input_repertoire, sep="\t", header=0)
@@ -445,6 +456,7 @@ len_target_aa = len(target_aa)
 compatible_naives_def = (repertoire["sequence_aa_length"] == len_target_aa)
 repertoire_compatible = repertoire[compatible_naives_def]
 print(f"Found {repertoire_compatible.shape[0]} compatible naive sequences for target {target_aa} with length {len_target_aa}.")
+print(repertoire_compatible["sequence_vdj_aa"])
 
 # Get distance
 compatible_naives = repertoire_compatible.copy()
@@ -453,6 +465,11 @@ targeting_model = hh_s5f
 
 sequences = compatible_naives[sequence_aa_column]
 
+print("Stereotyping params:")
+print(f"Target AA: {target_aa}")
+print(f"Compatible Naives: {repertoire_compatible['sequence_vdj_aa'].tolist()}")
+print(f"Sequence NT Column: {sequence_nt_column}")
+print(f"Sequence AA Column: {sequence_aa_column}")
 
 stereo = Stereotyping(
     target_aa=target_aa,
@@ -460,7 +477,7 @@ stereo = Stereotyping(
     targeting_model=hh_s5f,
     sequence_nt_column=sequence_nt_column,
     sequence_aa_column=sequence_aa_column,
-    embedding_model=embedding_model,
+    #embedding_model=embedding_model,
     distance_function=hamming_distance,
     distance_normalized=False
 )
