@@ -62,7 +62,7 @@ workflow STEREOTYPER {
         ch_versions = ch_versions.mix(AMULETY_ANTIBERTY.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTY.out.embedding
-                        .map{ it -> ["antiberty", it[0], it[1]] })
+                        .map{ it -> ["antiberty", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
@@ -73,7 +73,7 @@ workflow STEREOTYPER {
         ch_versions = ch_versions.mix(AMULETY_ANTIBERTA2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTA2.out.embedding
-                        .map{ it -> ["antiberta2", it[0], it[1]] })
+                        .map{ it -> ["antiberta2", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
@@ -84,7 +84,7 @@ workflow STEREOTYPER {
         ch_versions = ch_versions.mix(AMULETY_ESM2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ESM2.out.embedding
-                        .map{ it -> ["esm2", it[0], it[1]] })
+                        .map{ it -> ["esm2", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
@@ -95,7 +95,7 @@ workflow STEREOTYPER {
         ch_versions = ch_versions.mix(AMULETY_BALMPAIRED.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_BALMPAIRED.out.embedding
-                        .map{ it -> ["balmpaired", it[0], it[1]] })
+                        .map{ it -> ["balmpaired", it[0].id, it[0], it[1]] })
     }
 
     // Simulate convergence
@@ -113,7 +113,7 @@ workflow STEREOTYPER {
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ANTIBERTY_SIM.out.embedding
-                        .map{ it -> ["antiberty", it[0], it[1]] })
+                        .map{ it -> ["antiberty", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
@@ -123,7 +123,7 @@ workflow STEREOTYPER {
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ANTIBERTA2_SIM.out.embedding
-                        .map{ it -> ["antiberta2", it[0], it[1]] })
+                        .map{ it -> ["antiberta2", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
@@ -133,7 +133,7 @@ workflow STEREOTYPER {
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ESM2_SIM.out.embedding
-                        .map{ it -> ["esm2", it[0], it[1]] })
+                        .map{ it -> ["esm2", it[0].id, it[0], it[1]] })
     }
 
     if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
@@ -143,7 +143,7 @@ workflow STEREOTYPER {
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_BALMPAIRED_SIM.out.embedding
-                        .map{ it -> ["balmpaired", it[0], it[1]] })
+                        .map{ it -> ["balmpaired", it[0].id, it[0], it[1]] })
     }
 
     ch_repertoire_embeddings.dump(tag: 'repertoire_embeddings') // Debugging
@@ -159,10 +159,11 @@ workflow STEREOTYPER {
         .map { it -> [it[1].id, it[1], it[2], it[4]] } // channel: [ [meta.id, meta, repertoire, simulated_seqs] ]
         .dump(tag: 'repertoire_sim_meta') // Debugging
 
-    // Join repertoire embedding and simulated embeddings from the same embedding type
-    ch_embeddings = ch_repertoire_embeddings.join(ch_sim_embeddings, by: 0)
-        .map { it -> [it[1].id, it[0], it[1], it[2], it[4]] } // channel: [ [embedding_type, meta.id, repertore_embedding, simulation_embedding] ]
-        .dump(tag: 'embeddings joined')
+    // Join repertoire embedding and simulated embeddings from the same embedding type and sample id
+    ch_embeddings = ch_repertoire_embeddings.join(ch_sim_embeddings, by: [0,1], failOnMismatch: true)
+                .map { it -> [it[1], it[0], it[2], it[3], it[5]] } // channel: [ [meta.id, embedding_type, meta, repertoire_embedding, simulation_embedding] ]
+                .dump(tag: 'embeddings joined')
+
 
     // Combine all pairs of rep_sim_meta and embeddings for the same sample
     ch_rep_sim_meta_embeddings = ch_rep_sim_meta.cross(ch_embeddings)

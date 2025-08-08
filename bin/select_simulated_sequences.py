@@ -305,8 +305,6 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
     # dist_to_target np 1D array (n_simulated_seqs, )
     dist_to_target = np.linalg.norm(simulated_sequences_embeddings - target_embedding, axis=1)
 
-    dist_to_target = np.linalg.norm(simulated_sequences_embeddings - target_embedding, axis=1)
-
     # dist_to_centroids np 2D array (n_simulated_seqs, n_centroids)
     dist_to_centroids = cdist(simulated_sequences_embeddings, centroids_embeddings, metric='euclidean')
 
