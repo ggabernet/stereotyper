@@ -1,6 +1,6 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 # Select children based on distance to target and to other centroids in the repertoire
-# Usage: python select_children.py --dir <input_directory> --repertoire_embedding <repertoire_embedding.tsv> --simulated_embedding <simulated_embedding.tsv> --repertoire <repertoire.tsv> --simulated <simulated_sequences.tsv> --embedding_model <embedding_model> --target_aa <target_sequence_aa> --abundance <abundance_fraction> --repertoire_sample <number_of_repertoire_samples> --random_seed <random_seed> --germline_vcall <germline_V_call> --germline_jcall <germline_J_call>
+# Usage: python select_children.py --dir <input_directory> --repertoire_embedding <repertoire_embedding.tsv> --simulated_embedding <simulated_embedding.tsv> --repertoire <repertoire.tsv> --simulated <simulated_sequences.tsv> --embedding_model <embedding_model> --target_aa <target_seq_aa> --abundance <abundance_fraction> --repertoire_sample <number_of_repertoire_samples> --random_seed <random_seed> --germline_vcall <germline_V_call> --germline_jcall <germline_J_call>
 
 import pandas as pd
 # uses latest unreleased amulety version
@@ -42,7 +42,7 @@ parser.add_argument("--simulated_embedding", type=str, help="Path to simulated e
 parser.add_argument("--repertoire", type=str, help="Path to repertoire AIRR file.")
 parser.add_argument("--simulated", type=str, help="Path to simulated sequence and metadata file.")
 parser.add_argument("--target_aa", type=str, default="GFTVSSNYMSWVRQAPGKGLEWVSVIYSGGSTYYADSVKGRFTISRDNSENTLYLQMNSLRAEDTAVYYCARGEIQPYYYYGMDVWGQGTTVTVSS", help="Target amino acid sequence")
-parser.add_argument("--embedding_model", type=str, default="antiberty", help="Embedding model to use")
+#parser.add_argument("--embedding_model", type=str, default="antiberty", help="Embedding model to use")
 parser.add_argument("--abundance", type=float, default=0.01, help="Abundance fraction")
 parser.add_argument("--repertoire_sample", type=int, default=100000, help="Number of repertoire samples")
 parser.add_argument("--random_seed", type=int, default=42, help="Random seed")
@@ -62,7 +62,7 @@ simulated_embedding = args.simulated_embedding
 repertoire = args.repertoire
 simulated = args.simulated
 target_aa = args.target_aa
-embedding_model = args.embedding_model
+#embedding_model = args.embedding_model
 abundance = args.abundance
 repertoire_sample = args.repertoire_sample
 random_seed = args.random_seed

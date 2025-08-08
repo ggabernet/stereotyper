@@ -12,6 +12,7 @@ dependencies:
 - conda-forge::scikit-learn=1.7.1
 - conda-forge::seaborn=0.13.2
 - conda-forge::umap-learn=0.5.8
+- conda-forge::python-igraph=0.11.9
 - conda-forge::r-devtools
 - conda-forge::r-ggplot2
 - conda-forge::r-igraph

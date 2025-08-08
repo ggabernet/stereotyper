@@ -1,11 +1,10 @@
 process SELECT_SIMULATED_SEQUENCES {
     tag "$meta.id"
     publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
-    container "community.wave.seqera.io/library/anndata_matplotlib_numpy_pandas_pruned:7f590d3f128c4839"
+    container "docker.io/ggabernet/stereotyper:dev"
 
     input:
-    tuple val(meta), path(repertoire), path(repertoire_embedding)
-    tuple val(meta), path(simulated_sequences), path(simulated_embedding)
+    tuple val(meta), path(repertoire), path(simulated_sequences), path(repertoire_embedding), path(simulated_embedding)
 
     output:
     tuple val(meta), path("${meta.id}_selected_simulated_sequences.tsv"), emit: selected_simulated_sequences
@@ -14,14 +13,13 @@ process SELECT_SIMULATED_SEQUENCES {
 
     script:
     """
-    select_children.py --dir . \
+    select_simulated_sequences.py --dir . \
     --repertoire_embedding ${repertoire_embedding} \
     --simulated_embedding ${simulated_embedding} \
     --repertoire ${repertoire} \
     --simulated ${simulated_sequences} \
-    --embedding_model ${params.embedding_model} \
-    --target_aa ${params.target_sequence_aa} \
-    --abundance ${params.abundance_fraction} \
+    --target_aa ${params.target_seq_aa} \
+    --abundance ${params.clonal_abundance} \
     --repertoire_sample ${params.subsample_size} \
     --random_seed ${params.random_seed}
 

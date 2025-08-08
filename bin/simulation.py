@@ -346,7 +346,7 @@ class Stereotyping:
             selected_sequences.append({
                 'generation': gen,
                 'sequence_id': seq.sequence_id,
-                'sequence_aa': seq.sequence_aa,
+                'sequence_vdj_aa': seq.sequence_aa,
                 'sequence_nt': seq.sequence_nt,
                 'dist_to_target': seq.dist_to_target,
                 'v_call': 'IGHV',

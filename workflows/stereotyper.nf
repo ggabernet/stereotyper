@@ -6,6 +6,7 @@
 
 include { PREPROCESS_REPERTOIRE   } from '../modules/local/preprocess_repertoire/main'
 include { SIMULATE_CONVERGENCE    } from '../modules/local/simulation/main'
+include { SELECT_SIMULATED_SEQUENCES } from '../modules/local/select_simulated_sequences/main'
 
 // nf-core subworkflows
 include { paramsSummaryMap       } from 'plugin/nf-validation'
@@ -58,6 +59,7 @@ workflow STEREOTYPER {
             PREPROCESS_REPERTOIRE.out.repertoire,
             params.embedding_chain
         )
+        ch_versions = ch_versions.mix(AMULETY_ANTIBERTY.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTY.out.embedding
                         .map{ it -> ["antiberty", it[0], it[1]] })
@@ -68,6 +70,7 @@ workflow STEREOTYPER {
             PREPROCESS_REPERTOIRE.out.repertoire,
             params.embedding_chain
         )
+        ch_versions = ch_versions.mix(AMULETY_ANTIBERTA2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTA2.out.embedding
                         .map{ it -> ["antiberta2", it[0], it[1]] })
@@ -78,6 +81,7 @@ workflow STEREOTYPER {
             PREPROCESS_REPERTOIRE.out.repertoire,
             params.embedding_chain
         )
+        ch_versions = ch_versions.mix(AMULETY_ESM2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ESM2.out.embedding
                         .map{ it -> ["esm2", it[0], it[1]] })
@@ -88,6 +92,7 @@ workflow STEREOTYPER {
             PREPROCESS_REPERTOIRE.out.repertoire,
             params.embedding_chain
         )
+        ch_versions = ch_versions.mix(AMULETY_BALMPAIRED.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_BALMPAIRED.out.embedding
                         .map{ it -> ["balmpaired", it[0], it[1]] })
@@ -97,6 +102,7 @@ workflow STEREOTYPER {
     SIMULATE_CONVERGENCE (
         PREPROCESS_REPERTOIRE.out.repertoire
     )
+    ch_versions = ch_versions.mix(SIMULATE_CONVERGENCE.out.versions.first())
 
     ch_sim_embeddings = Channel.empty()
     // Get simulated sequences embeddings
@@ -142,11 +148,36 @@ workflow STEREOTYPER {
 
     ch_repertoire_embeddings.dump(tag: 'repertoire_embeddings') // Debugging
     ch_sim_embeddings.dump(tag: 'simulated_embeddings') // Debugging
-    PREPROCESS_REPERTOIRE.out.repertoire.dump(tag: 'repertoire') // Debugging
-    SIMULATE_CONVERGENCE.out.sequences.dump(tag: 'simulated_sequences') // Debugging
+    ch_repertoire_meta = PREPROCESS_REPERTOIRE.out.repertoire
+                        .map { it -> [it[0].id, it[0], it[1]] } // channel: [ [meta.id, meta, repertoire] ]
+                        .dump(tag: 'repertoire') // Debugging
+    ch_simulation_meta = SIMULATE_CONVERGENCE.out.sequences
+                        .map { it -> [it[0].id, it[0], it[1]] } // channel: [ [meta.id, meta, simulated_seqs] ]
+                        .dump(tag: 'simulated_sequences') // Debugging
 
+    ch_rep_sim_meta = ch_repertoire_meta.join(ch_simulation_meta, by: 0)
+        .map { it -> [it[1].id, it[1], it[2], it[4]] } // channel: [ [meta.id, meta, repertoire, simulated_seqs] ]
+        .dump(tag: 'repertoire_sim_meta') // Debugging
 
+    // Join repertoire embedding and simulated embeddings from the same embedding type
+    ch_embeddings = ch_repertoire_embeddings.join(ch_sim_embeddings, by: 0)
+        .map { it -> [it[1].id, it[0], it[1], it[2], it[4]] } // channel: [ [embedding_type, meta.id, repertore_embedding, simulation_embedding] ]
+        .dump(tag: 'embeddings joined')
 
+    // Combine all pairs of rep_sim_meta and embeddings for the same sample
+    ch_rep_sim_meta_embeddings = ch_rep_sim_meta.cross(ch_embeddings)
+        .map { it ->
+        def fmeta = [:] // create new meta map with id containing sample id and model type
+        fmeta.id = it[0][0] + '_' + it[1][1]
+        fmeta.model = it[1][1]
+        fmeta.sample_id = it[0][0]
+        [fmeta, it[0][2], it[0][3], it[1][3], it[1][4]] } // channel: [ [meta, repertoire, simulated_seqs, repertoire_embedding, simulation_embedding] ]
+        .dump(tag: 'rep_sim_meta_embeddings') // Debugging
+
+    SELECT_SIMULATED_SEQUENCES (
+        ch_rep_sim_meta_embeddings
+    )
+    ch_versions = ch_versions.mix(SELECT_SIMULATED_SEQUENCES.out.versions.first())
 
 
     //
