@@ -21,6 +21,7 @@ process SELECT_SIMULATED_SEQUENCES {
     --target_aa ${params.target_seq_aa} \
     --abundance ${params.clonal_abundance} \
     --repertoire_sample ${params.subsample_size} \
+    --fuzziness_param ${params.fuzziness_param} \
     --random_seed ${params.random_seed}
 
     # Save versions

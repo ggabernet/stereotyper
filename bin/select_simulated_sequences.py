@@ -45,6 +45,7 @@ parser.add_argument("--target_aa", type=str, default="GFTVSSNYMSWVRQAPGKGLEWVSVI
 #parser.add_argument("--embedding_model", type=str, default="antiberty", help="Embedding model to use")
 parser.add_argument("--abundance", type=float, default=0.01, help="Abundance fraction")
 parser.add_argument("--repertoire_sample", type=int, default=100000, help="Number of repertoire samples")
+parser.add_argument("--fuzziness_param", type=float, default=2.0, help="Parameter for distance weighting (should be in range (1, inf))")
 parser.add_argument("--random_seed", type=int, default=42, help="Random seed")
 args = parser.parse_args()
 
@@ -62,6 +63,7 @@ simulated_embedding = args.simulated_embedding
 repertoire = args.repertoire
 simulated = args.simulated
 target_aa = args.target_aa
+fuzziness_param = args.fuzziness_param
 #embedding_model = args.embedding_model
 abundance = args.abundance
 repertoire_sample = args.repertoire_sample
@@ -117,8 +119,12 @@ rep_meta = rep[rep["sequence_id"].isin(rep_embed["sequence_id"])]
 rep_meta = rep_meta.drop_duplicates(subset=["sequence_id"])
 
 # Sample repertoire sequences to desired depth
-rep_meta = rep_meta.sample(n=repertoire_sample, random_state=random_seed)
-rep_embed = rep_embed[rep_embed["sequence_id"].isin(rep_meta["sequence_id"])]
+if repertoire_sample < rep_meta.shape[0]:
+    logger.info("Sampling %d sequences from repertoire", repertoire_sample)
+    random_seed = random_seed if random_seed is not None else 42
+    # Sample repertoire metadata
+    rep_meta = rep_meta.sample(n=repertoire_sample, random_state=random_seed)
+    rep_embed = rep_embed[rep_embed["sequence_id"].isin(rep_meta["sequence_id"])]
 
 
 rep_meta["subject_id"] = subj_id
@@ -161,6 +167,12 @@ sim_meta = sim_meta.reindex(sim_embed.index)
 
 assert rep_meta.index.equals(rep_embed.index), "Indices do not match!"
 assert sim_meta.index.equals(sim_embed.index), "Indices do not match!"
+
+logger.info("After filtering:")
+logger.info(f"rep_meta shape: {rep_meta.shape}")
+logger.info(f"rep_embed shape: {rep_embed.shape}")
+logger.info(f"sim_meta shape: {sim_meta.shape}")
+logger.info(f"sim_embed shape: {sim_embed.shape}")
 
 ### Find centroids
 ### -----------------------------------------------
@@ -214,7 +226,6 @@ sc.pl.umap(
     save="_clustering_resolutions.png",
 )
 
-
 # Plot number of clusters per resolution
 plt.figure(figsize=(10, 6))
 num_clusters = [annd.obs[f'leiden_res_{res:4.2f}'].nunique() for res in resolutions]
@@ -233,7 +244,6 @@ centroids = sc.get.aggregate(
     annd, by=f"leiden_res_{picked_resolution:4.2f}", func=["mean"]
 )
 centroids.X = centroids.layers['mean'].copy()
-
 
 # Plot data with centroids
 
@@ -296,29 +306,47 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
                                 centroids_embeddings,
                                 target_embedding,
                                 abundance,
-                                repertoire_sample):
+                                repertoire_sample,
+                                fuzziness_param=2):
     """
     Pick sequences from simulated sequences according to their weighted distance to the target.
+
+    Parameters:
+    - simulated_sequences_embeddings: DataFrame with simulated sequences embeddings.
+    - centroids_embeddings: DataFrame with centroids embeddings.
+    - target_embedding: 1D numpy array with target embedding.
+    - abundance: float, fraction of sequences to sample.
+    - repertoire_sample: int, number of sequences to sample from the repertoire.
+    - fuzziness_param: float, parameter for distance weighting. Should take values (1, inf). The higher the value, the fuzzier the clustering is (including sequences further away from the target).
+
     """
     n_centroids = centroids_embeddings.shape[0]
+    logger.info(f"Start simulated sequences selection shape: {simulated_sequences_embeddings.shape}")
 
     # dist_to_target np 1D array (n_simulated_seqs, )
     dist_to_target = np.linalg.norm(simulated_sequences_embeddings - target_embedding, axis=1)
+    logger.info(f"Dist to target shape: {dist_to_target}")
 
     # dist_to_centroids np 2D array (n_simulated_seqs, n_centroids)
     dist_to_centroids = cdist(simulated_sequences_embeddings, centroids_embeddings, metric='euclidean')
+    logger.info(f"Dist to centroids shape: {dist_to_centroids}")
+
 
     # dist_to_target is a 1D numpy array of shape (n_simulated_seqs,), repeat to number of centroids
     dist_to_target_tiled = np.tile(dist_to_target[:, np.newaxis], (1, n_centroids))
+    logger.info(f"Dist to target tiled shape: {dist_to_target_tiled.shape}")
 
     # dist_to_target_over_centroids is a 2D numpy array of shape (n_simulated_seqs, n_centroids)
-    dist_to_target_over_centroids_sq = (dist_to_target_tiled / dist_to_centroids)**2
+    dist_to_target_over_centroids_sq = (dist_to_target_tiled / dist_to_centroids)**(2/fuzziness_param-1)
+
 
     # compute sum of normalized distances to target over centroids (n_simulated_seqs, )
     dist_to_target_over_centroids_sum = dist_to_target_over_centroids_sq.sum(axis=1)
 
     # weighted dist to centroids from target (n_simulated_seqs, )
     weighted_dist_to_centroids = 1 / dist_to_target_over_centroids_sum
+    logger.info(f"Weighted dist to centroids shape: {weighted_dist_to_centroids.shape}")
+
 
     # transformed weighted dist to centroids by logistic function (n_simulated_seqs, )
     weighted_dist_to_centroids_transformed = 1 / (1 + np.exp(-0.5 * weighted_dist_to_centroids))
@@ -326,9 +354,15 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
     # Rescaling weighted distances
     weighted_dist_to_centroids_rescaled = (weighted_dist_to_centroids_transformed - min(weighted_dist_to_centroids_transformed)) / (max(weighted_dist_to_centroids_transformed) - min(weighted_dist_to_centroids_transformed))
 
+    logger.info("Weighted distances to centroids rescaled shape: %s", weighted_dist_to_centroids_rescaled.shape)
+
     # Pick sequences according to probabilities
     sample_size = abundance * repertoire_sample
 
+    if sample_size >= simulated_sequences_embeddings.shape[0]:
+        logger.warning("Sample size is larger than number of simulated sequences. Using all simulated sequences.")
+        sample_size = simulated_sequences_embeddings.shape[0]
+    logger.info("Sampling %d sequences from simulated sequences", int(sample_size))
     sample = simulated_sequences_embeddings.sample(
         n=int(sample_size),
         weights=weighted_dist_to_centroids_rescaled,

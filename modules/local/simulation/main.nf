@@ -7,7 +7,7 @@ process SIMULATE_CONVERGENCE {
     tuple val(meta), path(repertoire)
 
     output:
-    tuple val(meta), path("*_selected_sequences.tsv"), emit: sequences
+    tuple val(meta), path("*_generations.tsv"), emit: sequences
     tuple val(meta), path("*_generations_logo.png"), path("*_generations_plot.png"), emit: plots
     path "versions.yml", emit: versions
 
