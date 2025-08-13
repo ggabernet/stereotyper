@@ -1,13 +1,14 @@
 process SELECT_SIMULATED_SEQUENCES {
     tag "$meta.id"
-    publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
+    publishDir "$params.outdir/simulation/${meta.id}_f${fuziness}_a${abundance}_s${repertoire_sample}_w${witness}", mode: 'copy'
     container "docker.io/ggabernet/stereotyper:dev"
 
     input:
     tuple val(meta), path(repertoire), path(simulated_sequences), path(repertoire_embedding), path(simulated_embedding)
 
     output:
-    tuple val(meta), path("${meta.id}_selected_simulated_sequences.tsv"), emit: selected_simulated_sequences
+    tuple val(meta), path("*_repertoire_with_simulated_meta.tsv"), emit: rep_sim_sequences
+    tuple val(meta), path("*_repertoire_with_simulated_embedding.tsv"), emit: rep_sim_embedding
     path "versions.yml", emit: versions
 
 
@@ -19,9 +20,10 @@ process SELECT_SIMULATED_SEQUENCES {
     --repertoire ${repertoire} \
     --simulated ${simulated_sequences} \
     --target_aa ${params.target_seq_aa} \
-    --abundance ${params.clonal_abundance} \
-    --repertoire_sample ${params.subsample_size} \
-    --fuzziness_param ${params.fuzziness_param} \
+    --abundance ${meta.abundance} \
+    --repertoire_sample ${meta.repertoire_sample} \
+    --fuzziness_param ${meta.fuzziness} \
+    --witness ${meta.witness} \
     --random_seed ${params.random_seed}
 
     # Save versions

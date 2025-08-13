@@ -44,6 +44,27 @@ workflow STEREOTYPER {
     ch_multiqc_files = Channel.empty()
 
     //
+    // Process simulation parameters
+    //
+
+    def fuzziness = params.fuzziness_param.toString().split(',').collect { it.trim().toInteger() }
+    ch_fuzziness = Channel.from(fuzziness)
+                         .map { it -> it as Float } // Convert to Float for consistency
+                         .dump(tag: 'fuzziness') // Debugging
+    def abundance = params.clonal_abundance.toString().split(',').collect { it.trim().toFloat() }
+    ch_abundance = Channel.from(abundance)
+                            .map { it -> it as Float } // Convert to Float for consistency
+                            .dump(tag: 'abundance') // Debugging
+    def repertoire_sample = params.subsample_size.toString().split(',').collect { it.trim().toInteger() }
+    ch_repertoire_sample = Channel.from(repertoire_sample)
+                            .map { it -> it as Integer } // Convert to Integer for consistency
+                            .dump(tag: 'repertoire_sample') // Debugging
+    def witness = params.witness.toString().split(',').collect { it.trim() }
+    ch_witness = Channel.from(witness)
+                        .dump(tag: 'witness') // Debugging
+
+
+    //
     // MODULE: Preprocess repertoire
     //
     PREPROCESS_REPERTOIRE (
@@ -175,6 +196,25 @@ workflow STEREOTYPER {
         fmeta.sample_id = it[0][0]
         [fmeta, it[0][2], it[0][3], it[1][3], it[1][4]] } // channel: [ [meta, repertoire, simulated_seqs, repertoire_embedding, simulation_embedding] ]
         .dump(tag: 'rep_sim_meta_embeddings') // Debugging
+
+    ch_f_a = ch_fuzziness.combine(ch_abundance)
+    ch_f_a_s = ch_f_a.combine(ch_repertoire_sample)
+    ch_simulation_params = ch_f_a_s.combine(ch_witness)
+                                    .dump(tag: 'simulation_params') // Debugging
+
+    ch_rep_sim_meta_embeddings = ch_rep_sim_meta_embeddings
+        .combine(ch_simulation_params)
+        .map { it ->
+        def fmeta = [:]
+        fmeta.id = it[0].id + '_f' + it[5].toString() + '_a' + it[6].toString() + '_s' + it[7].toString + '_w' + it[8].toString()
+        fmeta.model = it[0].model
+        fmeta.sample_id = it[0].sample_id
+        fmeta.fuzziness = it[5]
+        fmeta.abundance = it[6]
+        fmeta.repertoire_sample = it[7]
+        fmeta.witness = it[8]
+        [fmeta, it[1], it[2], it[3], it[4]] } // channel: [ [meta, repertoire, simulated_seqs, repertoire_embedding, simulation_embedding] ]
+        .dump(tag: 'rep_sim_meta_embeddings final') // Debugging
 
     SELECT_SIMULATED_SEQUENCES (
         ch_rep_sim_meta_embeddings
