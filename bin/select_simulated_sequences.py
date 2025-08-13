@@ -325,11 +325,11 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
 
     # dist_to_target np 1D array (n_simulated_seqs, )
     dist_to_target = np.linalg.norm(simulated_sequences_embeddings - target_embedding, axis=1)
-    logger.info(f"Dist to target shape: {dist_to_target}")
+    logger.info(f"Dist to target shape: {dist_to_target.shape}")
 
     # dist_to_centroids np 2D array (n_simulated_seqs, n_centroids)
     dist_to_centroids = cdist(simulated_sequences_embeddings, centroids_embeddings, metric='euclidean')
-    logger.info(f"Dist to centroids shape: {dist_to_centroids}")
+    logger.info(f"Dist to centroids shape: {dist_to_centroids.shape}")
 
 
     # dist_to_target is a 1D numpy array of shape (n_simulated_seqs,), repeat to number of centroids
@@ -337,7 +337,7 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
     logger.info(f"Dist to target tiled shape: {dist_to_target_tiled.shape}")
 
     # dist_to_target_over_centroids is a 2D numpy array of shape (n_simulated_seqs, n_centroids)
-    dist_to_target_over_centroids_sq = (dist_to_target_tiled / dist_to_centroids)**(2/fuzziness_param-1)
+    dist_to_target_over_centroids_sq = (dist_to_target_tiled / dist_to_centroids)**(2/(fuzziness_param-1))
 
 
     # compute sum of normalized distances to target over centroids (n_simulated_seqs, )
