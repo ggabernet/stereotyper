@@ -206,7 +206,7 @@ workflow STEREOTYPER {
         .combine(ch_simulation_params)
         .map { it ->
         def fmeta = [:]
-        fmeta.id = it[0].id + '_f' + it[5].toString() + '_a' + it[6].toString() + '_s' + it[7].toString + '_w' + it[8].toString()
+        fmeta.id = it[0].id + '_f' + it[5].toString() + '_a' + it[6].toString() + '_s' + it[7].toString() + '_w' + it[8].toString()
         fmeta.model = it[0].model
         fmeta.sample_id = it[0].sample_id
         fmeta.fuzziness = it[5]
