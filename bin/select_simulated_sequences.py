@@ -221,7 +221,7 @@ if witness == "yes":
         # Sample repertoire metadata
         rep_meta = rep_meta.sample(n=repertoire_sample, random_state=random_seed)
         rep_embed = rep_embed[rep_embed["sequence_id"].isin(rep_meta["sequence_id"])]
-    else: 
+    else:
         logger.info(f"repertoire_sample {repertoire_sample} is bigger than repertoire size {rep_meta.shape[0]}, unable to sample.")
         repertoire_sample = rep_meta.shape[0]
 
@@ -506,11 +506,11 @@ if witness == "yes":
     ### Save results
     repertoire_with_simulated_meta = pd.concat([rep_meta, picked_simulated_seqs_meta])
     repertoire_with_simulated_meta.reset_index(inplace=True, names="sequence_id")
-    repertoire_with_simulated_meta.to_csv(dir+subj_id+"_repertoire_with_simulated_meta.tsv", sep="\t", index=False)
+    repertoire_with_simulated_meta.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_meta.tsv"), sep="\t", index=False)
 
     repertoire_with_simulated_embed = pd.concat([rep_embed, picked_simulated_seqs])
     repertoire_with_simulated_embed.reset_index(inplace=True, names="sequence_id")
-    repertoire_with_simulated_embed.to_csv(dir+subj_id+"_repertoire_with_simulated_embedding.tsv", sep="\t", index=False)
+    repertoire_with_simulated_embed.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_embedding.tsv"), sep="\t", index=False)
 
 elif witness=="no":
     sample_size = abundance * repertoire_sample
@@ -524,11 +524,11 @@ elif witness=="no":
         # Sample repertoire metadata
         rep_meta = rep_meta.sample(n=repertoire_sample, random_state=random_seed)
         rep_embed = rep_embed[rep_embed["sequence_id"].isin(rep_meta["sequence_id"])]
-    else: 
+    else:
         logger.info(f"repertoire_sample {repertoire_sample} is bigger than repertoire size {rep_meta.shape[0]}, unable to sample.")
-    
-    rep_meta.to_csv(dir+subj_id+"_repertoire_with_simulated_meta.tsv", sep="\t", index=False)
-    rep_embed.to_csv(dir+subj_id+"_repertoire_with_simulated_embedding.tsv", sep="\t", index=False)
+
+    rep_meta.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_meta.tsv"), sep="\t", index=False)
+    rep_embed.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_embedding.tsv"), sep="\t", index=False)
 else:
     ValueError(f"Provided witness value is invalid: {witness}. Please provide 'yes' or 'no'.")
 
