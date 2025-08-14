@@ -320,7 +320,7 @@ if witness == "yes":
     plt.xlabel("Resolution")
     plt.ylabel("Number of Clusters")
     plt.title("Number of Clusters per Resolution")
-    plt.savefig(figures_dir + "num_clusters_per_resolution.png")
+    plt.savefig(os.path.join(figures_dir, "num_clusters_per_resolution.png"))
 
 
     # Pick resolution
@@ -423,7 +423,7 @@ if witness == "yes":
     plt.xlabel("Distance to Target")
     plt.ylabel("Frequency")
     plt.title("Distribution of Distance to Target in Original Sequences")
-    plt.savefig(figures_dir + "dist_to_target_original.png")
+    plt.savefig(os.path.join(figures_dir, "dist_to_target_original.png"))
 
 
     # Plot picked simulated meta dist_to_target distribution
@@ -432,7 +432,7 @@ if witness == "yes":
     plt.xlabel("Distance to Target")
     plt.ylabel("Frequency")
     plt.title("Distribution of Distances to Target in Picked Simulated Sequences")
-    plt.savefig(figures_dir + "dist_to_target_selected_sequences.png")
+    plt.savefig(os.path.join(figures_dir, "dist_to_target_selected_sequences.png"))
 
 
     ## UMAP of repertoire with all simulated sequences
