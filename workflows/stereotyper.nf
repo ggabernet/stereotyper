@@ -53,7 +53,7 @@ workflow STEREOTYPER {
     // Process simulation parameters
     //
 
-    def fuzziness = params.fuzziness_param.toString().split(',').collect { it.trim().toInteger() }
+    def fuzziness = params.fuzziness_param.toString().split(',').collect { it.trim().toFloat() }
     ch_fuzziness = Channel.from(fuzziness)
                          .map { it -> it as Float } // Convert to Float for consistency
                          .dump(tag: 'fuzziness') // Debugging
