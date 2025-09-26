@@ -49,13 +49,13 @@ if "sequence_vdj_aa" in repertoire.columns:
 print("Repertoire size:", repertoire.shape)
 original_size = repertoire.shape[0]
 
-
 # drop rows where "cdr1" column starts with "."
-repertoire = repertoire[repertoire["cdr1"].notnull() & ~repertoire["cdr1"].str.startswith(".")]
+repertoire = repertoire[repertoire["cdr1"].notnull()]
+repertoire = repertoire[~repertoire["cdr1"].str.startswith(".")]
 
 # drop rows with incomplete fwr4 sequences
-repertoire = repertoire[repertoire["fwr4"].notnull() & ~repertoire["fwr4"].str.endswith(".")]
-repertoire = repertoire[repertoire["fwr4"].notnull() & ~repertoire["fwr4"].str.endswith("-")]
+repertoire = repertoire[repertoire["fwr4"].notnull()]
+repertoire = repertoire[~repertoire["fwr4"].str.endswith("-")]
 
 rows_dropped = original_size - repertoire.shape[0]
 
