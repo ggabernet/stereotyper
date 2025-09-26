@@ -1,7 +1,5 @@
 process UNZIP {
-    tag "$meta.id"
-    publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
-    container "docker.io/library/alpine:latest"
+    container "community.wave.seqera.io/library/unzip:6.0--0e729f0c20458893"
 
     input:
     path zip_file
