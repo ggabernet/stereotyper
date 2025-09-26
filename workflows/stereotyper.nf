@@ -47,9 +47,7 @@ workflow STEREOTYPER {
 
 
     // Read IgBLAST reference
-    ch_igblast_reference = Channel.fromPath(params.igblast_reference, checkIfExists: true)
-        .ifEmpty { error "Cannot find IgBLAST reference file: ${params.igblast_reference}" }
-        .dump(tag: 'igblast_reference') // Debugging
+    ch_igblast_reference = Channel.fromPath(params.igblast_reference)
 
     //
     // Process simulation parameters
