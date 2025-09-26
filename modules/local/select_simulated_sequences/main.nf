@@ -16,6 +16,7 @@ process SELECT_SIMULATED_SEQUENCES {
     script:
     """
     select_simulated_sequences.py --dir . \
+    --repertoire_id ${meta.id} \
     --repertoire_embedding ${repertoire_embedding} \
     --simulated_embedding ${simulated_embedding} \
     --repertoire ${repertoire} \

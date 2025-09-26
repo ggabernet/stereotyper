@@ -451,7 +451,7 @@ repertoire["sequence_aa_length"] = repertoire["sequence_vdj_aa"].apply(lambda x:
 # Read target sequence
 len_target_aa = len(target_aa)
 
-#TODO : use only unmutated for compatible, and consider all sequences of same length
+#TODO : use only unmutated for compatible
 # Get compatible naive sequences
 compatible_naives_def = (repertoire["sequence_aa_length"] == len_target_aa)
 repertoire_compatible = repertoire[compatible_naives_def]

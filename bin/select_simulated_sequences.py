@@ -111,6 +111,7 @@ def pick_simulated_sequences(simulated_sequences_embeddings,
 
 parser = argparse.ArgumentParser(description="Select simulated sequences based on centroids and target embedding.")
 parser.add_argument("--dir", type=str, default=".", help="results directory")
+parser.add_argument("--repertoire_id", type=str, help="Repertoire ID")
 parser.add_argument("--repertoire_embedding", type=str, help="Path to repertoire embedded file")
 parser.add_argument("--simulated_embedding", type=str, help="Path to simulated embedded file")
 parser.add_argument("--repertoire", type=str, help="Path to repertoire AIRR file.")
@@ -151,8 +152,8 @@ input_path = Path(dir)
 
 os.listdir(dir)
 
-# TODO update how to get subject ID
-subj_id = str(repertoire).split("/")[-1].split("_subsampled")[0]
+# Get repertoire_ID from args
+subj_id = args.repertoire_id
 
 # Read input files
 logger.info("Reading input files...")
