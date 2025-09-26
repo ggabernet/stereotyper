@@ -7,6 +7,8 @@
 include { PREPROCESS_REPERTOIRE   } from '../modules/local/preprocess_repertoire/main'
 include { SIMULATE_CONVERGENCE    } from '../modules/local/simulation/main'
 include { SELECT_SIMULATED_SEQUENCES } from '../modules/local/select_simulated_sequences/main'
+include { UNZIP                   } from '../modules/local/unzip/main'
+include { IGBLAST                 } from '../modules/local/igblast/main'
 
 // nf-core subworkflows
 include { paramsSummaryMap       } from 'plugin/nf-validation'
@@ -43,6 +45,12 @@ workflow STEREOTYPER {
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
 
+
+    // Read IgBLAST reference
+    ch_igblast_reference = Channel.fromPath(params.igblast_reference, checkIfExists: true)
+        .ifEmpty { error "Cannot find IgBLAST reference file: ${params.igblast_reference}" }
+        .dump(tag: 'igblast_reference') // Debugging
+
     //
     // Process simulation parameters
     //
@@ -63,6 +71,9 @@ workflow STEREOTYPER {
     ch_witness = Channel.from(witness)
                         .dump(tag: 'witness') // Debugging
 
+
+    // Unzip IgBLAST reference if needed
+    UNZIP( ch_igblast_reference )
 
     //
     // MODULE: Preprocess repertoire
@@ -197,6 +208,7 @@ workflow STEREOTYPER {
         [fmeta, it[0][2], it[0][3], it[1][3], it[1][4]] } // channel: [ [meta, repertoire, simulated_seqs, repertoire_embedding, simulation_embedding] ]
         .dump(tag: 'rep_sim_meta_embeddings') // Debugging
 
+    // Combine with simulation parameters
     ch_f_a = ch_fuzziness.combine(ch_abundance)
     ch_f_a_s = ch_f_a.combine(ch_repertoire_sample)
     ch_simulation_params = ch_f_a_s.combine(ch_witness)
@@ -216,10 +228,20 @@ workflow STEREOTYPER {
         [fmeta, it[1], it[2], it[3], it[4]] } // channel: [ [meta, repertoire, simulated_seqs, repertoire_embedding, simulation_embedding] ]
         .dump(tag: 'rep_sim_meta_embeddings final') // Debugging
 
+    // Select simulated sequences based on simulation parameters
     SELECT_SIMULATED_SEQUENCES (
         ch_rep_sim_meta_embeddings
     )
     ch_versions = ch_versions.mix(SELECT_SIMULATED_SEQUENCES.out.versions.first())
+
+    // Run everything through IgBLAST to get V(D)J annotation and junction region
+    IGBLAST (
+        SELECT_SIMULATED_SEQUENCES.out.rep_sim_sequences,
+        UNZIP.out.unzipped.collect(),
+    )
+    ch_versions = ch_versions.mix(IGBLAST.out.versions.first())
+
+
 
 
     //
