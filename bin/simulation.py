@@ -6,7 +6,7 @@
 # Usage: python simulation.py --input_repertoire <input_file.tsv> --target_aa <target_sequence.tsv> --embedding_model_input <model_name> --distance_function_input <distance_function> --n_children_per_generation <number_of_children> --mutation_rate <mutation_rate> --output_prefix <output_prefix>
 # The input repertoire should be a TSV file with columns for nucleotide and amino acid sequences. It requires the following columns:
 # - sequence: Nucleotide sequence
-# - sequence_aa: Amino acid sequence
+# - sequence_aa_column: Amino acid sequence
 # - v_call: V gene call
 # - j_call: J gene call
 # - junction_aa: Junction amino acid sequence
@@ -321,7 +321,7 @@ class Stereotyping:
                 all_sequences.append({
                     'generation': gen,
                     'sequence_id': child.sequence_id,
-                    'sequence_vdj_aa': child.sequence_aa,
+                    'sequence_aa': child.sequence_aa,
                     'sequence': child.sequence_nt,
                     'dist_to_target': child.dist_to_target,
                     'v_call': 'IGHV',
@@ -443,10 +443,13 @@ if distance_function_input == "hamming_distance":
 # Read repertoire
 repertoire = pd.read_csv(input_repertoire, sep="\t", header=0)
 
+# Remove sequences without junction_aa or sequence_aa
+repertoire = repertoire.dropna(subset=["junction_aa", sequence_aa_column])
+
 # Preprocess repertoire
 repertoire["junction_length_aa"] = repertoire["junction_aa"].apply(lambda x: len(x))
 repertoire["CDRH3_length_aa"] = repertoire["junction_length_aa"] - 2
-repertoire["sequence_aa_length"] = repertoire["sequence_vdj_aa"].apply(lambda x: len(x))
+repertoire["sequence_aa_length"] = repertoire[sequence_aa_column].apply(lambda x: len(x))
 
 # Read target sequence
 len_target_aa = len(target_aa)
@@ -456,7 +459,7 @@ len_target_aa = len(target_aa)
 compatible_naives_def = (repertoire["sequence_aa_length"] == len_target_aa)
 repertoire_compatible = repertoire[compatible_naives_def]
 print(f"Found {repertoire_compatible.shape[0]} compatible naive sequences for target {target_aa} with length {len_target_aa}.")
-print(repertoire_compatible["sequence_vdj_aa"])
+print(repertoire_compatible[sequence_aa_column])
 
 # Get distance
 compatible_naives = repertoire_compatible.copy()
@@ -467,7 +470,7 @@ sequences = compatible_naives[sequence_aa_column]
 
 print("Stereotyping params:")
 print(f"Target AA: {target_aa}")
-print(f"Compatible Naives: {repertoire_compatible['sequence_vdj_aa'].tolist()}")
+print(f"Compatible Naives: {repertoire_compatible[sequence_aa_column].tolist()}")
 print(f"Sequence NT Column: {sequence_nt_column}")
 print(f"Sequence AA Column: {sequence_aa_column}")
 
