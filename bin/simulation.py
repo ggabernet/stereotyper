@@ -9,7 +9,7 @@
 # - sequence_aa_column: Amino acid sequence
 # - v_call: V gene call
 # - j_call: J gene call
-# - junction_aa: Junction amino acid sequence
+# - cdr3_aa: cdr3 amino acid sequence
 # - sequence_id: Unique identifier for each sequence
 # - cdr1, fwr2, cdr2, fwr3, cdr3, fwr4: CDR and FWR regions of the sequence
 
@@ -444,11 +444,10 @@ if distance_function_input == "hamming_distance":
 repertoire = pd.read_csv(input_repertoire, sep="\t", header=0)
 
 # Remove sequences without junction_aa or sequence_aa
-repertoire = repertoire.dropna(subset=["junction_aa", sequence_aa_column])
+repertoire = repertoire.dropna(subset=["cdr3_aa", sequence_aa_column])
 
 # Preprocess repertoire
-repertoire["junction_length_aa"] = repertoire["junction_aa"].apply(lambda x: len(x))
-repertoire["CDRH3_length_aa"] = repertoire["junction_length_aa"] - 2
+repertoire["CDRH3_length_aa"] = repertoire["cdr3_aa"].apply(lambda x: len(x))
 repertoire["sequence_aa_length"] = repertoire[sequence_aa_column].apply(lambda x: len(x))
 
 # Read target sequence
