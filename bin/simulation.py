@@ -405,7 +405,7 @@ class Stereotyping:
                 all_sequences.append({
                     'generation': gen,
                     'sequence_id': child.sequence_id,
-                    'sequence_aa': child.sequence_aa,
+                    'sequence_vdj_aa': child.sequence_aa,
                     'sequence': child.sequence_nt,
                     'dist_to_target': child.dist_to_target
                 })
