@@ -321,7 +321,7 @@ class Stereotyping:
                 all_sequences.append({
                     'generation': gen,
                     'sequence_id': child.sequence_id,
-                    'sequence_aa': child.sequence_aa,
+                    'sequence_vdj_aa': child.sequence_aa,
                     'sequence': child.sequence_nt,
                     'dist_to_target': child.dist_to_target,
                     'v_call': 'IGHV',
@@ -405,13 +405,13 @@ class Stereotyping:
                 all_sequences.append({
                     'generation': gen,
                     'sequence_id': child.sequence_id,
-                    'sequence_vdj_aa': child.sequence_aa, # Needed by next processes
+                    'sequence_vdj_aa': child.sequence_aa,
                     'sequence': child.sequence_nt,
                     'dist_to_target': child.dist_to_target
                 })
 
         df = pd.DataFrame(all_sequences)
-        counts_mat = logomaker.alignment_to_matrix(df['sequence_aa'].tolist())
+        counts_mat = logomaker.alignment_to_matrix(df['sequence_vdj_aa'].tolist())
 
         # Plot the sequence logo
         plt.figure(figsize=(25, 2))
