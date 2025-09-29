@@ -1,5 +1,6 @@
 process SIMULATE_CONVERGENCE {
     tag "$meta.id"
+    label "process_low"
     publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
     container "docker.io/ggabernet/stereotyper:dev"
 

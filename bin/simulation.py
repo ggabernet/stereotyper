@@ -422,7 +422,6 @@ class Stereotyping:
         plt.savefig(filename, dpi=300, bbox_inches='tight')
 
 
-
 # Get the HH_S5F model from R
 hh_s5f = r["HH_S5F"]
 

@@ -1,5 +1,6 @@
 process PREPROCESS_REPERTOIRE {
     tag "$meta.id"
+    label "process_low"
     publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
     container "community.wave.seqera.io/library/pandas_r-alakazam_rpy2:cea1b8fb7f0c04d3"
 
