@@ -221,7 +221,7 @@ if witness == "yes":
         random_seed = random_seed if random_seed is not None else 42
         # Sample repertoire metadata
         rep_meta = rep_meta.sample(n=repertoire_sample, random_state=random_seed)
-        rep_embed = rep_embed[rep_embed["sequence_id"].isin(rep_meta["sequence_id"])]
+        rep_embed = rep_embed[rep_meta.index]
     else:
         logger.info(f"repertoire_sample {repertoire_sample} is bigger than repertoire size {rep_meta.shape[0]}, unable to sample.")
         repertoire_sample = rep_meta.shape[0]
