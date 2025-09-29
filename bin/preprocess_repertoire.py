@@ -28,7 +28,7 @@ parser.add_argument("--outname", type=str, default=None, help="Output file name 
 args = parser.parse_args()
 
 input_repertoire = args.input_repertoire
-subsample_size = args.subsample_size
+#subsample_size = args.subsample_size
 if args.outname:
     outname = args.outname
 else:
