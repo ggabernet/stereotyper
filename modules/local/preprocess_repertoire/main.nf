@@ -15,7 +15,6 @@ process PREPROCESS_REPERTOIRE {
     """
     preprocess_repertoire.py \
     --input_repertoire ${repertoire} \
-    --subsample_size ${params.subsample_size} \
     --outname ${meta.id}_subsampled.tsv
 
     # Save versions

@@ -3,11 +3,10 @@
 """
 Preprocess repertoire file by subsampling and translating sequences.
 This script reads a repertoire TSV file, drops rows with incomplete CDR1 sequences,
-generates a new nucleotide sequence column without FWR1, translates the sequences to amino acids,
-and subsamples the data to a specified size. The output is saved to a new TSV file.
+generates a new nucleotide sequence column without FWR1, translates the sequences to amino acids. The output is saved to a new TSV file.
 
 Usage:
-python preprocess_repertoire.py --input_repertoire <input_file.tsv> --subsample_size <size> --outname <output_file.tsv>
+python preprocess_repertoire.py --input_repertoire <input_file.tsv> --outname <output_file.tsv>
 """
 
 import pandas as pd
@@ -23,7 +22,8 @@ alakazam = importr('alakazam')
 # parameters
 parser = argparse.ArgumentParser(description="Preprocess repertoire file")
 parser.add_argument("--input_repertoire", type=str, required=True, help="Path to input repertoire TSV file")
-parser.add_argument("--subsample_size", type=int, default=100000, help="Number of rows to subsample")
+# Do not subsample here as we want to use all sequences for the selection step
+#parser.add_argument("--subsample_size", type=int, default=100000, help="Number of rows to subsample")
 parser.add_argument("--outname", type=str, default=None, help="Output file name (optional)")
 args = parser.parse_args()
 
@@ -80,9 +80,9 @@ translation = list(alakazam.translateDNA(repertoire["sequence_nt_nofwr1"].tolist
 repertoire["sequence_vdj_aa"] = translation
 
 
-subset = repertoire.sample(n=subsample_size, random_state=42)
+#subset = repertoire.sample(n=subsample_size, random_state=42)
 
 
-subset.to_csv(outname, sep="\t", index=False)
+repertoire.to_csv(outname, sep="\t", index=False)
 
 

@@ -10,7 +10,7 @@ process SELECT_SIMULATED_SEQUENCES {
     output:
     tuple val(meta), path("*_repertoire_with_simulated_meta.tsv"), emit: rep_sim_sequences
     tuple val(meta), path("*_repertoire_with_simulated_embedding.tsv"), emit: rep_sim_embedding
-    path("*.png"), emit: figures
+    path("*.png"), emit: figures, optional: true
     path "versions.yml", emit: versions
 
 
