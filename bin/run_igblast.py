@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Script to run IgBLAST on a given input FASTA file and output the results in TSV format.
