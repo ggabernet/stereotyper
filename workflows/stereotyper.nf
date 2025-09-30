@@ -190,7 +190,7 @@ workflow STEREOTYPER {
         .dump(tag: 'repertoire_sim_meta') // Debugging
 
     // Join repertoire embedding and simulated embeddings from the same embedding type and sample id
-    ch_embeddings = ch_repertoire_embeddings.join(ch_sim_embeddings, by: [0,1], failOnMismatch: true)
+    ch_embeddings = ch_repertoire_embeddings.join(ch_sim_embeddings, by: [0,1], failOnMismatch: false)
                 .dump(tag: 'embeddings joined')
                 .map { it -> [it[1], it[0], it[2], it[3], it[5]] } // channel: [ [meta.id, embedding_type, meta, repertoire_embedding, simulation_embedding] ]
                 .dump(tag: 'embeddings joined mapped')
