@@ -528,6 +528,8 @@ elif witness=="no":
     else:
         logger.info(f"repertoire_sample {repertoire_sample} is bigger than repertoire size {rep_meta.shape[0]}, unable to sample.")
 
+    rep_meta.reset_index(inplace=True, names="sequence_id")
+    rep_embed.reset_index(inplace=True, names="sequence_id")
     rep_meta.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_meta.tsv"), sep="\t", index=False)
     rep_embed.to_csv(os.path.join(dir, subj_id+"_repertoire_with_simulated_embedding.tsv"), sep="\t", index=False)
 else:
