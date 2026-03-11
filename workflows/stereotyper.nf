@@ -18,14 +18,14 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ster
 
 
 // nf-core modules
-include { AMULETY_ANTIBERTA2 } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_ANTIBERTY } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_BALMPAIRED } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_ESM2 } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_ANTIBERTA2 as AMULETY_ANTIBERTA2_SIM } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_ANTIBERTY as AMULETY_ANTIBERTY_SIM } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_BALMPAIRED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_ESM2 as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ANTIBERTA2} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ANTIBERTY} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_BALMPAIRED} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ESM2} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ANTIBERTA2_SIM} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ANTIBERTY_SIM} from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_EMBED as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/embed/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 
 
@@ -90,7 +90,6 @@ workflow STEREOTYPER {
             params.embedding_chain,
             "antiberty"
         )
-        ch_versions = ch_versions.mix(AMULETY_ANTIBERTY.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTY.out.embedding
                         .map{ it -> ["antiberty", it[0].id, it[0], it[1]] })
@@ -102,7 +101,6 @@ workflow STEREOTYPER {
             params.embedding_chain,
             "antiberta2"
         )
-        ch_versions = ch_versions.mix(AMULETY_ANTIBERTA2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ANTIBERTA2.out.embedding
                         .map{ it -> ["antiberta2", it[0].id, it[0], it[1]] })
@@ -114,7 +112,6 @@ workflow STEREOTYPER {
             params.embedding_chain,
             "esm2"
         )
-        ch_versions = ch_versions.mix(AMULETY_ESM2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_ESM2.out.embedding
                         .map{ it -> ["esm2", it[0].id, it[0], it[1]] })
@@ -126,7 +123,6 @@ workflow STEREOTYPER {
             params.embedding_chain,
             "balm-paired"
         )
-        ch_versions = ch_versions.mix(AMULETY_BALMPAIRED.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
                         .mix(AMULETY_BALMPAIRED.out.embedding
                         .map{ it -> ["balmpaired", it[0].id, it[0], it[1]] })
