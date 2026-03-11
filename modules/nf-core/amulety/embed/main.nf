@@ -12,8 +12,8 @@ process AMULETY_EMBED {
     val(model)
 
     output:
+    tuple val(meta), path("${task.ext.prefix ?: meta.id}.tsv"), emit: embedding
     tuple val(meta), path("*metadata.tsv"), emit: metadata
-    tuple val(meta), path("${prefix}.tsv"), emit: embedding
     tuple val("${task.process}"), val('amulety'), eval("amulety --help 2>&1 | grep -o 'version [0-9\\.]\\+' | grep -o '[0-9\\.]\\+'"), emit: versions_amulety, topic: versions
 
     when:
