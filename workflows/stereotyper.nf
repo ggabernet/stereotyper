@@ -18,14 +18,14 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ster
 
 
 // nf-core modules
-include { AMULETY_ANTIBERTA2 } from '../modules/nf-core/amulety/antiberta2/main'
-include { AMULETY_ANTIBERTY } from '../modules/nf-core/amulety/antiberty/main'
-include { AMULETY_BALMPAIRED } from '../modules/nf-core/amulety/balmpaired/main'
-include { AMULETY_ESM2 } from '../modules/nf-core/amulety/esm2/main'
-include { AMULETY_ANTIBERTA2 as AMULETY_ANTIBERTA2_SIM } from '../modules/nf-core/amulety/antiberta2/main'
-include { AMULETY_ANTIBERTY as AMULETY_ANTIBERTY_SIM } from '../modules/nf-core/amulety/antiberty/main'
-include { AMULETY_BALMPAIRED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/balmpaired/main'
-include { AMULETY_ESM2 as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/esm2/main'
+include { AMULETY_ANTIBERTA2 } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_ANTIBERTY } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_BALMPAIRED } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_ESM2 } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_ANTIBERTA2 as AMULETY_ANTIBERTA2_SIM } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_ANTIBERTY as AMULETY_ANTIBERTY_SIM } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_BALMPAIRED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/embed/main'
+include { AMULETY_ESM2 as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/embed/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 
 
@@ -87,7 +87,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY(
             PREPROCESS_REPERTOIRE.out.repertoire,
-            params.embedding_chain
+            params.embedding_chain,
+            "antiberty"
         )
         ch_versions = ch_versions.mix(AMULETY_ANTIBERTY.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
@@ -98,7 +99,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
         AMULETY_ANTIBERTA2(
             PREPROCESS_REPERTOIRE.out.repertoire,
-            params.embedding_chain
+            params.embedding_chain,
+            "antiberta2"
         )
         ch_versions = ch_versions.mix(AMULETY_ANTIBERTA2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
@@ -109,7 +111,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
         AMULETY_ESM2(
             PREPROCESS_REPERTOIRE.out.repertoire,
-            params.embedding_chain
+            params.embedding_chain,
+            "esm2"
         )
         ch_versions = ch_versions.mix(AMULETY_ESM2.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
@@ -120,7 +123,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
         AMULETY_BALMPAIRED(
             PREPROCESS_REPERTOIRE.out.repertoire,
-            params.embedding_chain
+            params.embedding_chain,
+            "balm-paired"
         )
         ch_versions = ch_versions.mix(AMULETY_BALMPAIRED.out.versions.first())
         ch_repertoire_embeddings = ch_repertoire_embeddings
@@ -139,7 +143,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY_SIM(
             SIMULATE_CONVERGENCE.out.sequences,
-            params.embedding_chain
+            params.embedding_chain,
+            "antiberty"
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ANTIBERTY_SIM.out.embedding
@@ -149,7 +154,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
         AMULETY_ANTIBERTA2_SIM(
             SIMULATE_CONVERGENCE.out.sequences,
-            params.embedding_chain
+            params.embedding_chain,
+            "antiberta2"
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ANTIBERTA2_SIM.out.embedding
@@ -159,7 +165,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
         AMULETY_ESM2_SIM(
             SIMULATE_CONVERGENCE.out.sequences,
-            params.embedding_chain
+            params.embedding_chain,
+            "esm2"
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_ESM2_SIM.out.embedding
@@ -169,7 +176,8 @@ workflow STEREOTYPER {
     if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
         AMULETY_BALMPAIRED_SIM(
             SIMULATE_CONVERGENCE.out.sequences,
-            params.embedding_chain
+            params.embedding_chain,
+            "balm-paired"
         )
         ch_sim_embeddings = ch_sim_embeddings
                         .mix(AMULETY_BALMPAIRED_SIM.out.embedding
@@ -238,9 +246,6 @@ workflow STEREOTYPER {
         UNZIP.out.unzipped.collect(),
     )
     ch_versions = ch_versions.mix(IGBLAST.out.versions.first())
-
-
-
 
     //
     // Collate and save software versions
