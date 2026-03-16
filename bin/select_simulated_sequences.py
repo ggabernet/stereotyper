@@ -409,7 +409,8 @@ if witness == "yes":
         centroids_embeddings=centr_arr,
         target_embedding=target_arr,
         abundance=abundance,
-        repertoire_sample=repertoire_sample
+        repertoire_sample=repertoire_sample,
+        fuzziness_param=fuzziness_param
     )
 
     assert(all(simulated_seqs.index == sim_meta.index))
