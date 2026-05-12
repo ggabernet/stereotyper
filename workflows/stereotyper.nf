@@ -40,6 +40,7 @@ workflow STEREOTYPER {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
+    igblast_reference
     multiqc_config
     multiqc_logo
     multiqc_methods_description
@@ -52,7 +53,7 @@ workflow STEREOTYPER {
 
 
     // Read IgBLAST reference
-    ch_igblast_reference = channel.fromPath(params.igblast_reference)
+    ch_igblast_reference = channel.fromPath(igblast_reference)
 
     //
     // Process simulation parameters
@@ -74,6 +75,7 @@ workflow STEREOTYPER {
     ch_witness = channel.from(witness)
                         .dump(tag: 'witness') // Debugging
 
+    ch_samplesheet.dump(tag: 'samplesheet') // Debugging
 
     // Unzip IgBLAST reference if needed
     UNZIP( ch_igblast_reference )
@@ -89,7 +91,8 @@ workflow STEREOTYPER {
     ch_repertoire_embeddings = channel.empty()
 
     AMULETY_TRANSLATE(
-        PREPROCESS_REPERTOIRE.out.repertoire
+        PREPROCESS_REPERTOIRE.out.repertoire,
+        UNZIP.out.unzipped.collect(),
     )
 
     // Get repertoire embeddings
@@ -147,7 +150,7 @@ workflow STEREOTYPER {
     // Get simulated sequences embeddings
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY_SIM(
-            SIMULATE_CONVERGENCE.out.sequences,
+            SIMULATE_CONVERGENCE.out.selected_sequences,
             params.embedding_chain,
             "antiberty"
         )
@@ -191,7 +194,8 @@ workflow STEREOTYPER {
 
     ch_repertoire_embeddings.dump(tag: 'repertoire_embeddings') // Debugging
     ch_sim_embeddings.dump(tag: 'simulated_embeddings') // Debugging
-    ch_repertoire_meta = PREPROCESS_REPERTOIRE.out.repertoire
+    //ch_repertoire_meta = PREPROCESS_REPERTOIRE.out.repertoire
+    ch_repertoire_meta = AMULETY_TRANSLATE.out.repertoire_translated
                         .map { it -> [it[0].id, it[0], it[1]] } // channel: [ [meta.id, meta, repertoire] ]
                         .dump(tag: 'repertoire') // Debugging
     ch_simulation_meta = SIMULATE_CONVERGENCE.out.sequences
@@ -284,9 +288,9 @@ workflow STEREOTYPER {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config                     = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config              = params.multiqc_config ? channel.fromPath(params.multiqc_config, checkIfExists: true) : channel.empty()
-    ch_multiqc_logo                       = params.multiqc_logo ? channel.fromPath(params.multiqc_logo, checkIfExists: true) : channel.empty()
+    ch_multiqc_config                     = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config              = params.multiqc_config ? file(params.multiqc_config, checkIfExists: true) : []
+    ch_multiqc_logo                       = params.multiqc_logo ? file(params.multiqc_logo, checkIfExists: true) : []
     summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     ch_workflow_summary                   = channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
@@ -295,11 +299,30 @@ workflow STEREOTYPER {
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
 
+    ch_multiqc_files_collected = ch_multiqc_files
+                .collect()
+                .ifEmpty([])
+
+    // Build MultiQC input tuple
+    def buildMultiqcInputTuple = { id, files ->
+        [
+            [id: id],
+            files,
+            [ch_multiqc_config, ch_multiqc_custom_config].findAll { cfg -> cfg },
+            ch_multiqc_logo,
+            [],
+            []
+        ]
+    }
+
+    // Merge all multiqc input channels
+    ch_multiqc_input = ch_multiqc_files_collected
+        .map { files ->
+            buildMultiqcInputTuple.call('multiqc_report', files)
+        }
+
     MULTIQC (
-        ch_multiqc_files.collect(),
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList()
+        ch_multiqc_input
     )
 
     emit:

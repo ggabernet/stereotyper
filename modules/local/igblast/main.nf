@@ -1,7 +1,6 @@
 process IGBLAST {
     tag "$meta.id"
     label "process_low"
-    publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
     container "community.wave.seqera.io/library/igblast_pandas:1e4fe10623287fd0"
 
     input:

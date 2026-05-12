@@ -9,7 +9,7 @@
 # - sequence_aa_column: Amino acid sequence
 # - v_call: V gene call
 # - j_call: J gene call
-# - cdr3_aa: cdr3 amino acid sequence
+# - junction_aa: junction amino acid sequence
 # - sequence_id: Unique identifier for each sequence
 # - cdr1, fwr2, cdr2, fwr3, cdr3, fwr4: CDR and FWR regions of the sequence
 
@@ -443,18 +443,17 @@ if distance_function_input == "hamming_distance":
 repertoire = pd.read_csv(input_repertoire, sep="\t", header=0)
 
 # Remove sequences without junction_aa or sequence_aa
-repertoire = repertoire.dropna(subset=["cdr3_aa", sequence_aa_column])
+repertoire = repertoire.dropna(subset=["junction_aa", sequence_aa_column])
 
 # Preprocess repertoire
-repertoire["CDRH3_length_aa"] = repertoire["cdr3_aa"].apply(lambda x: len(x))
+repertoire["junction_length_aa"] = repertoire["junction_aa"].apply(lambda x: len(x))
 repertoire["sequence_aa_length"] = repertoire[sequence_aa_column].apply(lambda x: len(x))
 
 # Read target sequence
 len_target_aa = len(target_aa)
 
-#TODO : use only unmutated for compatible
-# Get compatible naive sequences
-compatible_naives_def = (repertoire["sequence_aa_length"] == len_target_aa)
+# Get compatible naive sequences (same length and mutation frequency below 0.01)
+compatible_naives_def = (repertoire["sequence_aa_length"] == len_target_aa ) & (repertoire["mu_freq"] < 0.01)
 repertoire_compatible = repertoire[compatible_naives_def]
 print(f"Found {repertoire_compatible.shape[0]} compatible naive sequences for target {target_aa} with length {len_target_aa}.")
 print(repertoire_compatible[sequence_aa_column])

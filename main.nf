@@ -37,6 +37,7 @@ workflow WF_STEREOTYPER {
     //
     STEREOTYPER (
         samplesheet,
+        params.igblast_reference,
         params.multiqc_config,
         params.multiqc_logo,
         params.multiqc_methods_description,
@@ -84,7 +85,6 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        params.hook_url,
         WF_STEREOTYPER.out.multiqc_report
     )
 }

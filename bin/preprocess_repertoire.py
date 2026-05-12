@@ -47,10 +47,10 @@ original_size = repertoire.shape[0]
 
 # Drop unproductive sequences
 if "productive" in repertoire.columns:
-    repertoire = repertoire[repertoire["productive"] == "true"]
+    repertoire = repertoire[repertoire["productive"] == "T"]
     productive_size = repertoire.shape[0]
     rows_dropped = original_size - productive_size
-    print("Dropped unproductive sequences. New size:", repertoire.shape)
+    print(f"Dropped {rows_dropped} unproductive sequences. New size: {repertoire.shape}")
 else:
     productive_size = original_size
     print("Column 'productive' not found. No sequences dropped based on productive status.")
@@ -95,6 +95,11 @@ repertoire["duplicate_count"] = repertoire.groupby(["sequence_nt_nofwr1", "c_cal
 
 # Drop duplicate sequences but keep those with different c_call
 repertoire = repertoire.drop_duplicates(subset=["sequence_nt_nofwr1", "c_call"])
+
+# Final size after dropping duplicates
+final_size = repertoire.shape[0]
+print("Final repertoire size after dropping duplicates based on sequence_nt_nofwr1 and c_call:", final_size)
+
 repertoire.to_csv(outname, sep="\t", index=False)
 
 

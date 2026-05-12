@@ -1,7 +1,6 @@
 process SELECT_SIMULATED_SEQUENCES {
     tag "$meta.id"
     label "process_medium"
-    publishDir "$params.outdir/simulation/${meta.id}", mode: 'copy'
     container "docker.io/ggabernet/stereotyper:dev"
 
     input:

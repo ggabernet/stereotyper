@@ -1,7 +1,6 @@
 process SIMULATE_CONVERGENCE {
     tag "$meta.id"
     label "process_low"
-    publishDir "$params.outdir/simulation/$meta.id", mode: 'copy'
     container "docker.io/ggabernet/stereotyper:dev"
 
     input:
@@ -9,7 +8,9 @@ process SIMULATE_CONVERGENCE {
 
     output:
     tuple val(meta), path("*_generations.tsv"), emit: sequences
+    tuple val(meta), path("*_selected_sequences.tsv"), emit: selected_sequences
     tuple val(meta), path("*_generations_logo.png"), path("*_generations_plot.png"), emit: plots
+    tuple val(meta), path("*_simulation.log"), emit: logs
     path "versions.yml", emit: versions
 
     script:
@@ -21,7 +22,7 @@ process SIMULATE_CONVERGENCE {
     --mutation_rate ${params.mutation_rate} \
     --sequence_nt_column ${params.sequence_nt_column} \
     --sequence_aa_column ${params.sequence_aa_column} \
-    --output_prefix ${meta.id}
+    --output_prefix ${meta.id} > ${meta.id}_simulation.log 2>&1
 
     # Save versions
     cat <<EOF > versions.yml
