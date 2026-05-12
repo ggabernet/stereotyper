@@ -35,9 +35,7 @@ else:
 
 repertoire = pd.read_csv(input_repertoire, sep="\t", header=0)
 
-
-repertoire.columns
-
+print("Columns available in the repertoire file:", repertoire.columns)
 
 if "sequence_vdj_aa" in repertoire.columns:
     print("Existing column 'sequence_vdj_aa' will be dropped.")
@@ -47,6 +45,26 @@ if "sequence_vdj_aa" in repertoire.columns:
 print("Repertoire size:", repertoire.shape)
 original_size = repertoire.shape[0]
 
+# Drop unproductive sequences
+if "productive" in repertoire.columns:
+    repertoire = repertoire[repertoire["productive"] == "true"]
+    productive_size = repertoire.shape[0]
+    rows_dropped = original_size - productive_size
+    print("Dropped unproductive sequences. New size:", repertoire.shape)
+else:
+    productive_size = original_size
+    print("Column 'productive' not found. No sequences dropped based on productive status.")
+
+# Annotate duplicate count
+repertoire["duplicate_count"] = repertoire.groupby(["sequence", "c_call"])["sequence"].transform("size")
+
+# Drop duplicate sequences but keep those with different c_call
+repertoire = repertoire.drop_duplicates(subset=["sequence", "c_call"])
+
+new_size = repertoire.shape[0]
+rows_dropped = productive_size - new_size
+print("Dropped duplicate sequences:", rows_dropped)
+
 # drop rows where "cdr1" column starts with "."
 repertoire = repertoire[repertoire["cdr1"].notnull()]
 repertoire = repertoire[~repertoire["cdr1"].str.startswith(".")]
@@ -55,10 +73,9 @@ repertoire = repertoire[~repertoire["cdr1"].str.startswith(".")]
 repertoire = repertoire[repertoire["fwr4"].notnull()]
 repertoire = repertoire[~repertoire["fwr4"].str.endswith("-")]
 
-rows_dropped = original_size - repertoire.shape[0]
+rows_dropped = new_size - repertoire.shape[0]
 
-print("Dropped sequences with incompleted cdr1 or fwr4:", rows_dropped)
-
+print("Dropped sequences with incomplete cdr1, or fwr4:", rows_dropped)
 
 # generate new sequence_nt column by concatenating cdr1, fwr2, cdr2, fwr3, cdr3, fwr4
 repertoire["sequence_nt_nofwr1"] = (
@@ -71,13 +88,13 @@ repertoire["sequence_nt_nofwr1"] = (
 )
 repertoire["sequence_nt_nofwr1"] = repertoire["sequence_nt_nofwr1"].str.replace("-", "").str.replace(".", "")
 
+# Drop sequence duplicates that might appear after this step but preserving sequences with different c_call
 
-translation = list(alakazam.translateDNA(repertoire["sequence_nt_nofwr1"].tolist()))
+# Annotate new duplicate count
+repertoire["duplicate_count"] = repertoire.groupby(["sequence_nt_nofwr1", "c_call"])["duplicate_count"].transform("sum")
 
-
-repertoire["sequence_vdj_aa"] = translation
-
-
+# Drop duplicate sequences but keep those with different c_call
+repertoire = repertoire.drop_duplicates(subset=["sequence_nt_nofwr1", "c_call"])
 repertoire.to_csv(outname, sep="\t", index=False)
 
 

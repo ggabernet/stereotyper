@@ -4,11 +4,11 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { PREPROCESS_REPERTOIRE   } from '../modules/local/preprocess_repertoire/main'
-include { SIMULATE_CONVERGENCE    } from '../modules/local/simulation/main'
-include { SELECT_SIMULATED_SEQUENCES } from '../modules/local/select_simulated_sequences/main'
-include { UNZIP                   } from '../modules/local/unzip/main'
-include { IGBLAST                 } from '../modules/local/igblast/main'
+include { PREPROCESS_REPERTOIRE   } from '../modules/local/preprocess_repertoire'
+include { SIMULATE_CONVERGENCE    } from '../modules/local/simulation'
+include { SELECT_SIMULATED_SEQUENCES } from '../modules/local/select_simulated_sequences'
+include { UNZIP                   } from '../modules/local/unzip'
+include { IGBLAST                 } from '../modules/local/igblast'
 
 // nf-core subworkflows
 include { paramsSummaryMap       } from 'plugin/nf-validation'
@@ -18,15 +18,16 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_ster
 
 
 // nf-core modules
-include { AMULETY_EMBED as AMULETY_ANTIBERTA2} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_ANTIBERTY} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_BALMPAIRED} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_ESM2} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_ANTIBERTA2_SIM} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_ANTIBERTY_SIM} from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/embed/main'
-include { AMULETY_EMBED as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/embed/main'
-include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { AMULETY_TRANSLATE } from '../modules/nf-core/amulety/translate'
+include { AMULETY_EMBED as AMULETY_ANTIBERTA2} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_ANTIBERTY} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_BALMPAIRED} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_ESM2} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_ANTIBERTA2_SIM} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_ANTIBERTY_SIM} from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_BALMPAIRED_SIM } from '../modules/nf-core/amulety/embed'
+include { AMULETY_EMBED as AMULETY_ESM2_SIM } from '../modules/nf-core/amulety/embed'
+include { MULTIQC                } from '../modules/nf-core/multiqc'
 
 
 /*
@@ -42,31 +43,31 @@ workflow STEREOTYPER {
 
     main:
 
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions = channel.empty()
+    ch_multiqc_files = channel.empty()
 
 
     // Read IgBLAST reference
-    ch_igblast_reference = Channel.fromPath(params.igblast_reference)
+    ch_igblast_reference = channel.fromPath(params.igblast_reference)
 
     //
     // Process simulation parameters
     //
 
     def fuzziness = params.fuzziness_param.toString().split(',').collect { it.trim().toFloat() }
-    ch_fuzziness = Channel.from(fuzziness)
+    ch_fuzziness = channel.from(fuzziness)
                          .map { it -> it as Float } // Convert to Float for consistency
                          .dump(tag: 'fuzziness') // Debugging
     def abundance = params.clonal_abundance.toString().split(',').collect { it.trim().toFloat() }
-    ch_abundance = Channel.from(abundance)
+    ch_abundance = channel.from(abundance)
                             .map { it -> it as Float } // Convert to Float for consistency
                             .dump(tag: 'abundance') // Debugging
     def repertoire_sample = params.subsample_size.toString().split(',').collect { it.trim().toInteger() }
-    ch_repertoire_sample = Channel.from(repertoire_sample)
+    ch_repertoire_sample = channel.from(repertoire_sample)
                             .map { it -> it as Integer } // Convert to Integer for consistency
                             .dump(tag: 'repertoire_sample') // Debugging
     def witness = params.witness.toString().split(',').collect { it.trim() }
-    ch_witness = Channel.from(witness)
+    ch_witness = channel.from(witness)
                         .dump(tag: 'witness') // Debugging
 
 
@@ -81,12 +82,16 @@ workflow STEREOTYPER {
     )
     ch_versions = ch_versions.mix(PREPROCESS_REPERTOIRE.out.versions.first())
 
-    ch_repertoire_embeddings = Channel.empty()
+    ch_repertoire_embeddings = channel.empty()
+
+    AMULETY_TRANSLATE(
+        PREPROCESS_REPERTOIRE.out.repertoire
+    )
 
     // Get repertoire embeddings
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY(
-            PREPROCESS_REPERTOIRE.out.repertoire,
+            AMULETY_TRANSLATE.out.repertoire_translated,
             params.embedding_chain,
             "antiberty"
         )
@@ -97,7 +102,7 @@ workflow STEREOTYPER {
 
     if (params.embeddings && params.embeddings.split(',').contains('antiberta2') ){
         AMULETY_ANTIBERTA2(
-            PREPROCESS_REPERTOIRE.out.repertoire,
+            AMULETY_TRANSLATE.out.repertoire_translated,
             params.embedding_chain,
             "antiberta2"
         )
@@ -108,7 +113,7 @@ workflow STEREOTYPER {
 
     if (params.embeddings && params.embeddings.split(',').contains('esm2') ){
         AMULETY_ESM2(
-            PREPROCESS_REPERTOIRE.out.repertoire,
+            AMULETY_TRANSLATE.out.repertoire_translated,
             params.embedding_chain,
             "esm2"
         )
@@ -119,7 +124,7 @@ workflow STEREOTYPER {
 
     if (params.embeddings && params.embeddings.split(',').contains('balmpaired') ){
         AMULETY_BALMPAIRED(
-            PREPROCESS_REPERTOIRE.out.repertoire,
+            AMULETY_TRANSLATE.out.repertoire_translated,
             params.embedding_chain,
             "balm-paired"
         )
@@ -130,11 +135,11 @@ workflow STEREOTYPER {
 
     // Simulate convergence
     SIMULATE_CONVERGENCE (
-        PREPROCESS_REPERTOIRE.out.repertoire
+        AMULETY_TRANSLATE.out.repertoire_translated
     )
     ch_versions = ch_versions.mix(SIMULATE_CONVERGENCE.out.versions.first())
 
-    ch_sim_embeddings = Channel.empty()
+    ch_sim_embeddings = channel.empty()
     // Get simulated sequences embeddings
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY_SIM(
@@ -253,13 +258,13 @@ workflow STEREOTYPER {
     //
     // MODULE: MultiQC
     //
-    ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-    ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
+    ch_multiqc_config                     = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config              = params.multiqc_config ? channel.fromPath(params.multiqc_config, checkIfExists: true) : channel.empty()
+    ch_multiqc_logo                       = params.multiqc_logo ? channel.fromPath(params.multiqc_logo, checkIfExists: true) : channel.empty()
     summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
+    ch_workflow_summary                   = channel.value(paramsSummaryMultiqc(summary_params))
     ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+    ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))

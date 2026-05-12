@@ -10,6 +10,11 @@
                         "git_sha": "0a73bb6f4bff09edfb61ae355826dbf94908108c",
                         "installed_by": ["modules"]
                     },
+                    "amulety/translate": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
