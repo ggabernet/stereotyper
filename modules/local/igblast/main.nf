@@ -1,6 +1,6 @@
 process IGBLAST {
     tag "$meta.id"
-    label "process_low"
+    label "process_high"
     container "community.wave.seqera.io/library/igblast_pandas:1e4fe10623287fd0"
 
     input:
