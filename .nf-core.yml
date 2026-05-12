@@ -17,16 +17,17 @@ lint:
     - .github/ISSUE_TEMPLATE/bug_report.yml
   multiqc_config:
     - report_comment
-  nextflow_config:
-    - manifest.name
-    - manifest.homePage
-    - process.cpus
-    - process.memory
-    - process.time
-    - custom_config
+nf_core_version: 4.0.2
 repository_type: pipeline
 template:
-  prefix: ggabernet
-  skip:
+  author: Gisela Gabernet
+  description: Pipeline to simulate convergence
+  force: false
+  is_nfcore: false
+  name: stereotyper
+  org: ggabernet
+  outdir: .
+  skip_features:
     - igenomes
     - nf_core_configs
+  version: 1.0dev
