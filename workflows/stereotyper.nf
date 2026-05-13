@@ -150,7 +150,7 @@ workflow STEREOTYPER {
     // Get simulated sequences embeddings
     if (params.embeddings && params.embeddings.split(',').contains('antiberty') ){
         AMULETY_ANTIBERTY_SIM(
-            SIMULATE_CONVERGENCE.out.selected_sequences,
+            SIMULATE_CONVERGENCE.out.sequences,
             params.embedding_chain,
             "antiberty"
         )
